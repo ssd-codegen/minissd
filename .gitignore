@@ -1,2 +1,4 @@
 *.exe
+*.pdb
 ols.json
+build
