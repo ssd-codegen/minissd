@@ -1,5 +1,5 @@
 #[derive(Debug)]
-import std::path::Path
+import std::path::Path;
 
 #[repr(C)]
 enum MyEnum {
@@ -7,7 +7,7 @@ enum MyEnum {
 	Value2 = 42,
 	Value3 ,
 	Value4 = 42 ,
-}
+};
 
 #[table]
 data MyData {
@@ -25,4 +25,4 @@ data MyData {
 
 	# [ column ( name = "field2" , type="int" )]
 	field2: int,
-}
+};

@@ -7,6 +7,10 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#ifdef _WIN32
+#define strdup _strdup
+#endif
+
 #define CHECKED_ASSIGN(obj, prop, func) \
     obj->prop = func(p);                \
     if (obj->prop == NULL)              \
@@ -514,10 +518,32 @@ AstNode *parse_node(Parser *p)
     else
     {
         error(p, "Unknown node type");
-        free(node);
+        free_ast(node);
         node = NULL;
     }
     free(ident);
+    if (node)
+    {
+        eat_whitespace(p);
+        if (p->current != ';')
+        {
+            switch (node->type)
+            {
+            case NODE_IMPORT:
+                error(p, "Expected ';' after import declaration");
+                break;
+            case NODE_DATA:
+                error(p, "Expected ';' after data declaration");
+                break;
+            case NODE_ENUM:
+                error(p, "Expected ';' after enum declaration");
+                break;
+            }
+            free_ast(node);
+            node = NULL;
+        }
+        advance(p);
+    }
     return node;
 }
 
