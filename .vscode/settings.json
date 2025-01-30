@@ -1,0 +1,20 @@
+{
+    "cSpell.words": [
+        "libgtest",
+        "MINISSD",
+        "valgrind"
+    ],
+    "files.associations": {
+        "*.smr": "scheme",
+        "*.fnl": "scheme",
+        "*.urn": "scheme",
+        "*.prf": "ini",
+        "*.dhall": "haskell",
+        "bsconfig.json": "jsonc",
+        "minissd.h": "c"
+    },
+    "clang-tidy.compilerArgs": [
+        "-Iinclude",
+        "-std=gnu99"
+    ]
+}

@@ -1,0 +1,28 @@
+#[derive(Debug)]
+import std::path::Path;
+
+#[repr(C)]
+enum MyEnum {
+	Value1,
+	Value2 = 42,
+	Value3 ,
+	Value4 = 42 ,
+};
+
+#[table]
+data MyData {
+	#[column(name="field1", type="string")]
+	#[asd(lkje="oirut")]
+	field1: string,
+
+	#[column(name="field2", type="int")]
+	field2: int,
+
+	# [ column ( name = "field1" , type = "string" ) ]
+	# [ asd ( lkje = "oirut" ) ]
+
+	field1 : string,
+
+	# [ column ( name = "field2" , type="int" )]
+	field2: int,
+};

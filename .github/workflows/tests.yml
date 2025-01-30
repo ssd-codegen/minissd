@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - "*"
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential libgtest-dev valgrind clang-tidy
+
+      - name: Initialize submodules
+        run: git submodule update --init --recursive
+
+      - name: Build Project
+        uses: threeal/cmake-action@v2.1.0
+
+      - name: Run clang-tidy
+        run: clang-tidy src/minissd.c -- -Iinclude -std=gnu99
+
+      - name: Run tests with valgrind memory leak check
+        run: |
+          cd build
+          valgrind --leak-check=full --error-exitcode=1 ./tests/minissd_tests
