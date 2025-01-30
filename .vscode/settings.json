@@ -1,6 +1,8 @@
 {
     "cSpell.words": [
-        "MINISSD"
+        "libgtest",
+        "MINISSD",
+        "valgrind"
     ],
     "files.associations": {
         "*.smr": "scheme",
