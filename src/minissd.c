@@ -163,7 +163,7 @@ char *parse_path(Parser *p)
         error(p, "Expected import path");
         return NULL;
     }
-    return _strdup(buffer);
+    return strdup(buffer);
 }
 
 int *parse_int(Parser *p)
@@ -209,7 +209,7 @@ char *parse_string(Parser *p)
     }
     advance(p);
     buffer[length] = '\0';
-    return _strdup(buffer);
+    return strdup(buffer);
 }
 
 char *parse_ident(Parser *p)
@@ -227,7 +227,7 @@ char *parse_ident(Parser *p)
         error(p, "Expected identifier");
         return NULL;
     }
-    return _strdup(buffer);
+    return strdup(buffer);
 }
 
 Attribute *parse_attributes(Parser *p)

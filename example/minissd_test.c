@@ -1,5 +1,3 @@
-#include "./minissd.h"
-
 #define ALLOC_TEST
 
 #ifdef ALLOC_TEST
@@ -10,6 +8,8 @@
 #ifdef ALLOC_TEST
 #include <crtdbg.h>
 #endif
+
+#include "./minissd.h"
 
 #include <stdio.h>
 #include <assert.h>
