@@ -28,7 +28,7 @@ jobs:
         uses: threeal/cmake-action@v2.1.0
 
       - name: Run clang-tidy
-        run: clang-tidy src/minissd.c -- -Iinclude -std=gnu99
+        run: clang-tidy src/minissd.c -- -Iinclude -std=c99
 
       - name: Run tests with valgrind memory leak check
         run: |

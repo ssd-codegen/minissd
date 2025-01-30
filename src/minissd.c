@@ -7,9 +7,21 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#ifdef _WIN32
-#define strdup _strdup
-#endif
+char *strdup_c99(const char *s)
+{
+    if (s == NULL)
+        return NULL;
+
+    size_t len = strlen(s) + 1;
+    char *dup = (char *)malloc(len);
+
+    if (dup)
+    {
+        memcpy(dup, s, len);
+    }
+
+    return dup;
+}
 
 #define CHECKED_DECLARE(type, obj, func) \
     type obj = func(p);                  \
@@ -185,7 +197,7 @@ char *parse_path(Parser *p)
         error(p, "Expected import path");
         return NULL;
     }
-    return strdup(buffer);
+    return strdup_c99(buffer);
 }
 
 int *parse_int(Parser *p)
@@ -231,7 +243,7 @@ char *parse_string(Parser *p)
     }
     advance(p);
     buffer[length] = '\0';
-    return strdup(buffer);
+    return strdup_c99(buffer);
 }
 
 char *parse_ident(Parser *p)
@@ -249,7 +261,7 @@ char *parse_ident(Parser *p)
         error(p, "Expected identifier");
         return NULL;
     }
-    return strdup(buffer);
+    return strdup_c99(buffer);
 }
 
 Attribute *parse_attributes(Parser *p)
