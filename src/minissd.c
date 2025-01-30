@@ -15,9 +15,60 @@
     obj->prop = func(p);                \
     if (obj->prop == NULL)              \
     {                                   \
-        free(obj);                      \
+        if (obj)                        \
+        {                               \
+            free(obj);                  \
+            obj = NULL;                 \
+        }                               \
         return NULL;                    \
     }
+
+#define CHECKED_ASSIGN_WITH(obj, prop, func, destructor) \
+    obj->prop = func(p);                                 \
+    if (obj->prop == NULL)                               \
+    {                                                    \
+        if (obj)                                         \
+        {                                                \
+            destructor(obj);                             \
+            obj = NULL;                                  \
+        }                                                \
+        return NULL;                                     \
+    }
+
+#define CHECKED_ASSIGN_EXT(obj, prop, func, sec) \
+    obj->prop = func(p);                         \
+    if (obj->prop == NULL)                       \
+    {                                            \
+        if (sec)                                 \
+        {                                        \
+            free(sec);                           \
+            sec = NULL;                          \
+        }                                        \
+        if (obj)                                 \
+        {                                        \
+            free(obj);                           \
+            obj = NULL;                          \
+        }                                        \
+        return NULL;                             \
+    }
+
+#define CHECKED_ASSIGN_WITH_EXT(obj, prop, func, destructor, sec) \
+    obj->prop = func(p);                                          \
+    if (obj->prop == NULL)                                        \
+    {                                                             \
+        if (sec)                                                  \
+        {                                                         \
+            free(sec);                                            \
+            sec = NULL;                                           \
+        }                                                         \
+        if (obj)                                                  \
+        {                                                         \
+            destructor(obj);                                      \
+            obj = NULL;                                           \
+        }                                                         \
+        return NULL;                                              \
+    }
+
 #define CHECKED_DECLARE(type, obj, func) \
     type obj = func(p);                  \
     if (obj == NULL)                     \
@@ -31,12 +82,18 @@ void free_arguments(Argument *args)
     Argument *current = args;
     while (current)
     {
-        free(current->key);
+        if (current->key)
+        {
+            free(current->key);
+            current->key = NULL;
+        }
         if (current->value)
         {
             free(current->value);
+            current->value = NULL;
         }
         Argument *next = current->next;
+        current->next = NULL;
         free(current);
         current = next;
     };
@@ -47,9 +104,18 @@ void free_attributes(Attribute *attrs)
     Attribute *current_attr = attrs;
     while (current_attr)
     {
-        free(current_attr->name);
-        free_arguments(current_attr->arguments);
+        if (current_attr->name)
+        {
+            free(current_attr->name);
+            current_attr->name = NULL;
+        }
+        if (current_attr->arguments)
+        {
+            free_arguments(current_attr->arguments);
+            current_attr->arguments = NULL;
+        }
         Attribute *next_attr = current_attr->next;
+        current_attr->next = NULL;
         free(current_attr);
         current_attr = next_attr;
     };
@@ -60,10 +126,23 @@ void free_properties(Property *prop)
     Property *current = prop;
     while (current)
     {
-        free(current->name);
-        free(current->type);
-        free_attributes(current->attributes);
+        if (current->name)
+        {
+            free(current->name);
+            current->name = NULL;
+        }
+        if (current->type)
+        {
+            free(current->type);
+            current->type = NULL;
+        }
+        if (current->attributes)
+        {
+            free_attributes(current->attributes);
+            current->attributes = NULL;
+        }
         Property *outer_next = current->next;
+        current->next = NULL;
         free(current);
         current = outer_next;
     };
@@ -74,13 +153,23 @@ void free_enum_values(EnumValue *values)
     EnumValue *current = values;
     while (current)
     {
-        free(current->name);
+        if (current->name)
+        {
+            free(current->name);
+            current->name = NULL;
+        }
         if (current->value)
         {
             free(current->value);
+            current->value = NULL;
         }
-        free_attributes(current->attributes);
+        if (current->attributes)
+        {
+            free_attributes(current->attributes);
+            current->attributes = NULL;
+        }
         EnumValue *next = current->next;
+        current->next = NULL;
         free(current);
         current = next;
     };
@@ -91,24 +180,49 @@ void free_ast(AstNode *ast)
     AstNode *current = ast;
     while (current)
     {
-        free_attributes(current->attributes);
+        if (current->attributes)
+        {
+            free_attributes(current->attributes);
+            current->attributes = NULL;
+        }
         switch (current->type)
         {
         case NODE_IMPORT:
-            free(current->node.importNode.path);
+            if (current->node.importNode.path)
+            {
+                free(current->node.importNode.path);
+                current->node.importNode.path = NULL;
+            }
             break;
         case NODE_DATA:
-            free(current->node.dataNode.name);
-            free_properties(current->node.dataNode.properties);
+            if (current->node.dataNode.name)
+            {
+                free(current->node.dataNode.name);
+                current->node.dataNode.name = NULL;
+            }
+            if (current->node.dataNode.properties)
+            {
+                free_properties(current->node.dataNode.properties);
+                current->node.dataNode.properties = NULL;
+            }
             break;
         case NODE_ENUM:
-            free(current->node.enumNode.name);
-            free_enum_values(current->node.enumNode.values);
+            if (current->node.enumNode.name)
+            {
+                free(current->node.enumNode.name);
+                current->node.enumNode.name = NULL;
+            }
+            if (current->node.enumNode.values)
+            {
+                free_enum_values(current->node.enumNode.values);
+                current->node.enumNode.values = NULL;
+            }
             break;
         default:
             break;
         }
         AstNode *next = current->next;
+        current->next = NULL;
         free(current);
         current = next;
     };
@@ -253,6 +367,7 @@ Attribute *parse_attributes(Parser *p)
         {
             Attribute *attr = (Attribute *)malloc(sizeof(Attribute));
             assert(attr);
+            attr->name = NULL;
             attr->arguments = NULL;
             attr->next = NULL;
 
@@ -270,6 +385,7 @@ Attribute *parse_attributes(Parser *p)
                 {
                     Argument *arg = (Argument *)malloc(sizeof(Argument));
                     assert(arg);
+                    arg->key = NULL;
                     arg->next = NULL;
                     arg->value = NULL;
 
@@ -366,6 +482,8 @@ EnumValue *parse_enum_values(Parser *p)
         assert(prop);
         prop->next = NULL;
         prop->value = NULL;
+        prop->attributes = NULL;
+        prop->name = NULL;
 
         eat_whitespace(p);
         prop->attributes = parse_attributes(p);
@@ -435,6 +553,9 @@ Property *parse_properties(Parser *p)
         Property *prop = (Property *)malloc(sizeof(Property));
         assert(prop);
         prop->next = NULL;
+        prop->attributes = NULL;
+        prop->name = NULL;
+        prop->type = NULL;
 
         eat_whitespace(p);
         prop->attributes = parse_attributes(p);
@@ -495,27 +616,98 @@ AstNode *parse_node(Parser *p)
     AstNode *node = (AstNode *)malloc(sizeof(AstNode));
     assert(node);
     node->next = NULL;
+    node->attributes = NULL;
 
     eat_whitespace(p);
     node->attributes = attributes;
     if (strcmp(ident, "import") == 0)
     {
         node->type = NODE_IMPORT;
-        CHECKED_ASSIGN(node, node.importNode.path, parse_path);
+        node->node.importNode.path = parse_path(p);
+        if (node->node.importNode.path == NULL)
+        {
+            if (ident)
+            {
+                free(ident);
+                ident = NULL;
+            }
+            if (node)
+            {
+                free_ast(node);
+                node = NULL;
+            }
+            return NULL;
+        };
     }
     else if (strcmp(ident, "data") == 0)
     {
         node->type = NODE_DATA;
-        CHECKED_ASSIGN(node, node.dataNode.name, parse_ident);
+        node->node.dataNode.name = parse_ident(p);
+        if (node->node.dataNode.name == NULL)
+        {
+            if (ident)
+            {
+                free(ident);
+                ident = NULL;
+            }
+            if (node)
+            {
+                free_ast(node);
+                node = NULL;
+            }
+            return NULL;
+        };
         eat_whitespace(p);
-        CHECKED_ASSIGN(node, node.dataNode.properties, parse_properties);
+        node->node.dataNode.properties = parse_properties(p);
+        if (node->node.dataNode.properties == NULL)
+        {
+            if (ident)
+            {
+                free(ident);
+                ident = NULL;
+            }
+            if (node)
+            {
+                free_ast(node);
+                node = NULL;
+            }
+            return NULL;
+        };
     }
     else if (strcmp(ident, "enum") == 0)
     {
         node->type = NODE_ENUM;
-        CHECKED_ASSIGN(node, node.enumNode.name, parse_ident);
+        node->node.enumNode.name = parse_ident(p);
+        if (node->node.enumNode.name == NULL)
+        {
+            if (ident)
+            {
+                free(ident);
+                ident = NULL;
+            }
+            if (node)
+            {
+                free_ast(node);
+                node = NULL;
+            }
+            return NULL;
+        };
         eat_whitespace(p);
-        CHECKED_ASSIGN(node, node.enumNode.values, parse_enum_values);
+        node->node.enumNode.values = parse_enum_values(p);
+        if (node->node.enumNode.values == NULL)
+        {
+            if (ident)
+            {
+                free(ident);
+                ident = NULL;
+            }
+            if (node)
+            {
+                free_ast(node);
+                node = NULL;
+            }
+            return NULL;
+        };
     }
     else
     {
@@ -542,7 +734,7 @@ AstNode *parse_node(Parser *p)
                 break;
             }
             free_ast(node);
-            node = NULL;
+            return NULL;
         }
         advance(p);
     }
