@@ -2,39 +2,26 @@
 
 #include "minissd.h"
 
-namespace helper
+class ParserTest : public ::testing::Test
 {
+protected:
+    Parser *parser;
+    AstNode *ast;
 
-    struct Parsed
+    void TearDown() override
     {
-        Parser *parser;
-        AstNode *ast;
-
-        Parsed(Parser *parser, AstNode *ast) : parser(parser), ast(ast) {}
-
-        ~Parsed()
-        {
-            minissd_free_ast(ast);
-            minissd_free_parser(parser);
-        }
-    };
-
-    Parsed parse(const char *source_code)
-    {
-        Parser *parser = minissd_create_parser(source_code);
-        AstNode *ast = minissd_parse(parser);
-        return {parser, ast};
+        minissd_free_ast(ast);
+        minissd_free_parser(parser);
     }
-}
+};
 
 // Test for successful parsing of valid input
-TEST(ParserTest, ValidInput_Data)
+TEST_F(ParserTest, ValidInput_Data)
 {
     const char *source_code = "data Person { name: string, age: int };";
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_NE(ast, nullptr);                            // Ensure AST is not NULL
     ASSERT_EQ(minissd_get_node_type(ast), NODE_DATA);   // Check if node type is 'data'
@@ -53,13 +40,12 @@ TEST(ParserTest, ValidInput_Data)
 }
 
 // Test for successful parsing of enum nodes
-TEST(ParserTest, ValidInput_Enum)
+TEST_F(ParserTest, ValidInput_Enum)
 {
     const char *source_code = "enum Color { Red = 1, Green, Blue };";
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_NE(ast, nullptr);                           // Ensure AST is not NULL
     ASSERT_EQ(minissd_get_node_type(ast), NODE_ENUM);  // Check if node type is 'enum'
@@ -83,13 +69,12 @@ TEST(ParserTest, ValidInput_Enum)
 }
 
 // Test for successful parsing of import nodes
-TEST(ParserTest, ValidInput_Import)
+TEST_F(ParserTest, ValidInput_Import)
 {
     const char *source_code = "import my::module;";
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_NE(ast, nullptr);                                  // Ensure AST is not NULL
     ASSERT_EQ(minissd_get_node_type(ast), NODE_IMPORT);       // Check if node type is 'import'
@@ -97,13 +82,12 @@ TEST(ParserTest, ValidInput_Import)
 }
 
 // Test for valid input: No enum values
-TEST(ParserTest, ValidInput_MissingEnumValues)
+TEST_F(ParserTest, ValidInput_MissingEnumValues)
 {
     const char *source_code = "enum Color { Red, Green };";
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_NE(ast, nullptr);
     ASSERT_EQ(minissd_get_node_type(ast), NODE_ENUM);
@@ -121,78 +105,72 @@ TEST(ParserTest, ValidInput_MissingEnumValues)
 }
 
 // Test for invalid input: Missing type in data node
-TEST(ParserTest, InvalidInput_MissingType)
+TEST_F(ParserTest, InvalidInput_MissingType)
 {
     const char *source_code = "data Person { name, age: int };"; // Missing type for 'name'
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_EQ(ast, nullptr); // Parsing should fail
     ASSERT_STREQ(parser->error, "Error: Expected ':' after property name at line 1, column 20");
 }
 
 // Test for invalid input: Missing braces in data node
-TEST(ParserTest, InvalidInput_MissingBraces)
+TEST_F(ParserTest, InvalidInput_MissingBraces)
 {
     const char *source_code = "data Person name: string, age: int"; // Missing closing brace
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_EQ(ast, nullptr); // Parsing should fail
     ASSERT_STREQ(parser->error, "Error: Expected '{' after data name at line 1, column 14");
 }
 
 // Test for invalid input: No enum values
-TEST(ParserTest, InvalidInput_NoEnumValues)
+TEST_F(ParserTest, InvalidInput_NoEnumValues)
 {
     const char *source_code = "enum Color {};"; // Missing closing brace
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_EQ(ast, nullptr); // Parsing should fail
     ASSERT_STREQ(parser->error, "Error: Enum must have at least one value at line 1, column 15");
 }
 
 // Test for empty input (edge case)
-TEST(ParserTest, EmptyInput)
+TEST_F(ParserTest, EmptyInput)
 {
     const char *source_code = "";
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_EQ(ast, nullptr); // No AST should be generated
     ASSERT_STREQ(parser->error, "Error: Expected at least one node at line 1, column 1");
 }
 
 // Test for edge case: Invalid character
-TEST(ParserTest, InvalidCharacter)
+TEST_F(ParserTest, InvalidCharacter)
 {
     const char *source_code = "data Person { name: string, age: int }; @"; // Invalid character '@'
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_EQ(ast, nullptr); // Parsing should fail due to invalid character
     ASSERT_STREQ(parser->error, "Error: Expected identifier at line 1, column 42");
 }
 
 // Test for correctly parsing attributes in data node
-TEST(ParserTest, ValidInput_WithAttributes)
+TEST_F(ParserTest, ValidInput_WithAttributes)
 {
     const char *source_code = "data Person { #[attr1(name=\"value1\")] name: string, age: int };";
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_NE(ast, nullptr);                            // Ensure AST is not NULL
     ASSERT_EQ(minissd_get_node_type(ast), NODE_DATA);   // Check if node type is 'data'
@@ -213,13 +191,12 @@ TEST(ParserTest, ValidInput_WithAttributes)
 }
 
 // Test for multiple attributes in the same node
-TEST(ParserTest, ValidInput_MultipleAttributes)
+TEST_F(ParserTest, ValidInput_MultipleAttributes)
 {
     const char *source_code = "data Person { #[attr1] #[attr2(name=\"value1\")] name: string, age: int };";
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_NE(ast, nullptr);                            // Ensure AST is not NULL
     ASSERT_EQ(minissd_get_node_type(ast), NODE_DATA);   // Check if node type is 'data'
@@ -244,13 +221,12 @@ TEST(ParserTest, ValidInput_MultipleAttributes)
     ASSERT_STREQ(arg->value, "value1");
 }
 
-TEST(ParserTest, ValidInput_MultipleAttributes2)
+TEST_F(ParserTest, ValidInput_MultipleAttributes2)
 {
     const char *source_code = "data Person { #[attr1, attr2(name=\"value1\")] name: string, age: int };";
 
-    auto parsed = helper::parse(source_code);
-    auto parser = parsed.parser;
-    auto ast = parsed.ast;
+    parser = minissd_create_parser(source_code);
+    ast = minissd_parse(parser);
 
     ASSERT_NE(ast, nullptr);                            // Ensure AST is not NULL
     ASSERT_EQ(minissd_get_node_type(ast), NODE_DATA);   // Check if node type is 'data'
