@@ -307,6 +307,7 @@ Attribute *parse_attributes(Parser *p)
                 {
                     error(p, "Expected ')' after attribute argument");
                     free_arguments(arg_head);
+                    free_attributes(attr);
                     free_attributes(head);
 
                     return NULL;
@@ -445,7 +446,8 @@ Property *parse_properties(Parser *p)
         if (p->current != ':')
         {
             error(p, "Expected ':' after property name");
-            free(prop);
+            free_properties(prop);
+            free_properties(head);
             return NULL;
         }
         advance(p);
