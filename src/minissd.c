@@ -40,9 +40,29 @@
         outer_current = outer_next;                          \
     }
 
+// Free functions
+void free_properties(Property *prop)
+{
+    FREE_LIST(Property, prop);
+}
+
+void free_enum_values(EnumValue *values)
+{
+    FREE_LIST(EnumValue, values);
+}
+
+void free_attributes(Attribute *attrs)
+{
+    FREE_NESTED_LIST(Attribute, attrs, Argument, arguments);
+}
+
+void free_arguments(Argument *args)
+{
+    FREE_LIST(Argument, args);
+}
+
 void error(Parser *p, const char *message)
 {
-    p->failed = true;
     snprintf(p->error, MAX_ERROR_SIZE, "Error: %s at line %d, column %d", message, p->line, p->column);
 }
 
@@ -336,6 +356,11 @@ EnumValue *parse_enum_values(Parser *p)
         return NULL;
     }
     advance(p);
+    if (!head)
+    {
+        error(p, "Enum must have at least one value");
+        return NULL;
+    }
     return head;
 }
 
@@ -472,6 +497,10 @@ AstNode *parse(Parser *p)
         }
         last = node;
     }
+    if (!ast)
+    {
+        error(p, "Expected at least one node");
+    }
     return ast;
 }
 
@@ -481,7 +510,7 @@ Parser *create_parser(const char *input)
     Parser *p = (Parser *)malloc(sizeof(Parser));
     assert(p);
     p->input = input;
-    p->failed = false;
+    memset(p->error, 0, MAX_ERROR_SIZE);
     p->current = 0;
     p->index = 0;
     p->line = 1;
@@ -515,7 +544,7 @@ Parser *minissd_create_parser(const char *input)
     return create_parser(input);
 }
 
-void minissd_free_parser(Parser *p)
+void free_parser(Parser *p)
 {
     free(p);
 }
@@ -526,9 +555,32 @@ AstNode *minissd_parse(Parser *p)
     return parse(p);
 }
 
-void minissd_free_ast(AstNode *ast)
+void free_ast(AstNode *ast)
 {
-    FREE_LIST(AstNode, ast);
+    AstNode *current = ast;
+    while (current)
+    {
+        switch (current->type)
+        {
+        case NODE_IMPORT:
+            free(current->node.importNode.path);
+            free_attributes(current->node.importNode.attributes);
+            break;
+        case NODE_DATA:
+            free(current->node.dataNode.name);
+            free_properties(current->node.dataNode.properties);
+            free_attributes(current->node.dataNode.attributes);
+        case NODE_ENUM:
+            free(current->node.enumNode.name);
+            free_enum_values(current->node.enumNode.values);
+            free_attributes(current->node.enumNode.attributes);
+        default:
+            break;
+        }
+        AstNode *next = current->next;
+        free(current);
+        current = next;
+    };
 }
 
 // AST Node accessors
@@ -591,6 +643,11 @@ const char *minissd_get_property_name(const Property *prop)
     return prop ? prop->name : NULL;
 }
 
+Attribute *minissd_get_property_attributes(const Property *prop)
+{
+    return prop ? prop->attributes : NULL;
+}
+
 const char *minissd_get_property_type(const Property *prop)
 {
     return prop ? prop->type : NULL;
@@ -605,6 +662,11 @@ EnumValue *minissd_get_enum_values(const AstNode *node)
 const char *minissd_get_enum_value_name(const EnumValue *value)
 {
     return value ? value->name : NULL;
+}
+
+Attribute *minissd_get_enum_value_attributes(const EnumValue *value)
+{
+    return value ? value->attributes : NULL;
 }
 
 int minissd_get_enum_value(const EnumValue *value, bool *has_value)
@@ -644,25 +706,4 @@ Attribute *minissd_get_next_attribute(const Attribute *attr)
 Argument *minissd_get_next_argument(const Argument *arg)
 {
     return arg ? arg->next : NULL;
-}
-
-// Free functions
-void minissd_free_properties(Property *prop)
-{
-    FREE_LIST(Property, prop);
-}
-
-void minissd_free_enum_values(EnumValue *values)
-{
-    FREE_LIST(EnumValue, values);
-}
-
-void minissd_free_attributes(Attribute *attrs)
-{
-    FREE_NESTED_LIST(Attribute, attrs, Argument, arguments);
-}
-
-void minissd_free_arguments(Argument *args)
-{
-    FREE_LIST(Argument, args);
 }

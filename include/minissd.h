@@ -88,7 +88,6 @@ extern "C"
     {
         const char *input;
         char error[MAX_ERROR_SIZE];
-        bool failed;
         char current;
         int index;
         int line;
@@ -117,10 +116,12 @@ extern "C"
     // Property and EnumValue accessors
     Property *minissd_get_properties(const AstNode *node);
     const char *minissd_get_property_name(const Property *prop);
+    Attribute *minissd_get_property_attributes(const Property *prop);
     const char *minissd_get_property_type(const Property *prop);
 
     EnumValue *minissd_get_enum_values(const AstNode *node);
     const char *minissd_get_enum_value_name(const EnumValue *value);
+    Attribute *minissd_get_enum_value_attributes(const EnumValue *value);
     int minissd_get_enum_value(const EnumValue *value, bool *has_value);
 
     // Traversal functions
@@ -129,12 +130,6 @@ extern "C"
     EnumValue *minissd_get_next_enum_value(const EnumValue *value);
     Attribute *minissd_get_next_attribute(const Attribute *attr);
     Argument *minissd_get_next_argument(const Argument *arg);
-
-    // Free functions
-    void minissd_free_properties(Property *prop);
-    void minissd_free_enum_values(EnumValue *values);
-    void minissd_free_attributes(Attribute *attrs);
-    void minissd_free_arguments(Argument *args);
 
 #ifdef __cplusplus
 }
