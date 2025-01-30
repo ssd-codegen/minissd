@@ -12,5 +12,9 @@
         "*.dhall": "haskell",
         "bsconfig.json": "jsonc",
         "minissd.h": "c"
-    }
+    },
+    "clang-tidy.compilerArgs": [
+        "-Iinclude",
+        "-std=gnu99"
+    ]
 }
