@@ -47,20 +47,17 @@ extern "C"
 
     typedef struct Import
     {
-        Attribute *attributes;
         char *path;
     } Import;
 
     typedef struct Data
     {
-        Attribute *attributes;
         char *name;
         Property *properties;
     } Data;
 
     typedef struct Enum
     {
-        Attribute *attributes;
         char *name;
         EnumValue *values;
     } Enum;
@@ -75,6 +72,7 @@ extern "C"
     typedef struct AstNode
     {
         NodeType type;
+        Attribute *attributes;
         union
         {
             Import importNode;

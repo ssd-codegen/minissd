@@ -12,7 +12,7 @@ set(SOURCES src/minissd.c include/minissd.h)
 if(MINISSD_SHARED)
     add_library(minissd SHARED ${SOURCES})
 else()
-    add_library(minissd SHARED ${SOURCES})
+    add_library(minissd STATIC ${SOURCES})
 endif()
 
 target_include_directories(minissd PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

@@ -1,5 +1,14 @@
 {
     "cSpell.words": [
         "MINISSD"
-    ]
+    ],
+    "files.associations": {
+        "*.smr": "scheme",
+        "*.fnl": "scheme",
+        "*.urn": "scheme",
+        "*.prf": "ini",
+        "*.dhall": "haskell",
+        "bsconfig.json": "jsonc",
+        "minissd.h": "c"
+    }
 }

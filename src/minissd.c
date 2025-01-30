@@ -21,44 +21,93 @@
         return NULL;                     \
     }
 
-#define FREE_LIST(type, head)       \
-    type *current = head;           \
-    while (current)                 \
-    {                               \
-        type *next = current->next; \
-        free(current);              \
-        current = next;             \
-    }
-
-#define FREE_NESTED_LIST(type, head, inner_type, inner_head) \
-    type *outer_current = head;                              \
-    while (outer_current)                                    \
-    {                                                        \
-        FREE_LIST(inner_type, outer_current->inner_head);    \
-        type *outer_next = outer_current->next;              \
-        free(outer_current);                                 \
-        outer_current = outer_next;                          \
-    }
-
 // Free functions
-void free_properties(Property *prop)
+void free_arguments(Argument *args)
 {
-    FREE_LIST(Property, prop);
-}
-
-void free_enum_values(EnumValue *values)
-{
-    FREE_LIST(EnumValue, values);
+    Argument *current = args;
+    while (current)
+    {
+        free(current->key);
+        if (current->value)
+        {
+            free(current->value);
+        }
+        Argument *next = current->next;
+        free(current);
+        current = next;
+    };
 }
 
 void free_attributes(Attribute *attrs)
 {
-    FREE_NESTED_LIST(Attribute, attrs, Argument, arguments);
+    Attribute *current_attr = attrs;
+    while (current_attr)
+    {
+        free(current_attr->name);
+        free_arguments(current_attr->arguments);
+        Attribute *next_attr = current_attr->next;
+        free(current_attr);
+        current_attr = next_attr;
+    };
 }
 
-void free_arguments(Argument *args)
+void free_properties(Property *prop)
 {
-    FREE_LIST(Argument, args);
+    Property *current = prop;
+    while (current)
+    {
+        free(current->name);
+        free(current->type);
+        free_attributes(current->attributes);
+        Property *outer_next = current->next;
+        free(current);
+        current = outer_next;
+    };
+}
+
+void free_enum_values(EnumValue *values)
+{
+    EnumValue *current = values;
+    while (current)
+    {
+        free(current->name);
+        if (current->value)
+        {
+            free(current->value);
+        }
+        free_attributes(current->attributes);
+        EnumValue *next = current->next;
+        free(current);
+        current = next;
+    };
+}
+
+void free_ast(AstNode *ast)
+{
+    AstNode *current = ast;
+    while (current)
+    {
+        free_attributes(current->attributes);
+        switch (current->type)
+        {
+        case NODE_IMPORT:
+            free(current->node.importNode.path);
+            break;
+        case NODE_DATA:
+            free(current->node.dataNode.name);
+            free_properties(current->node.dataNode.properties);
+            break;
+        case NODE_ENUM:
+            free(current->node.enumNode.name);
+            free_enum_values(current->node.enumNode.values);
+            break;
+        default:
+            break;
+        }
+        AstNode *next = current->next;
+        free(current);
+        current = next;
+    };
 }
 
 void error(Parser *p, const char *message)
@@ -253,9 +302,8 @@ Attribute *parse_attributes(Parser *p)
                 if (p->current != ')')
                 {
                     error(p, "Expected ')' after attribute argument");
-                    FREE_LIST(Argument, arg_head);
-
-                    FREE_NESTED_LIST(Attribute, head, Argument, arguments);
+                    free_arguments(arg_head);
+                    free_attributes(head);
 
                     return NULL;
                 }
@@ -284,7 +332,7 @@ Attribute *parse_attributes(Parser *p)
         eat_whitespace(p);
         if (p->current != ']')
         {
-            FREE_NESTED_LIST(Attribute, head, Argument, arguments);
+            free_attributes(head);
             error(p, "Expected ',' after attribute");
             return NULL;
         }
@@ -352,7 +400,7 @@ EnumValue *parse_enum_values(Parser *p)
     if (p->current != '}')
     {
         error(p, "Expected ',' after enum value");
-        FREE_LIST(EnumValue, head);
+        free_enum_values(head);
         return NULL;
     }
     advance(p);
@@ -424,7 +472,7 @@ Property *parse_properties(Parser *p)
     if (p->current != '}')
     {
         error(p, "Expected ',' after property");
-        FREE_LIST(Property, head);
+        free_properties(head);
         return NULL;
     }
     advance(p);
@@ -443,16 +491,15 @@ AstNode *parse_node(Parser *p)
     node->next = NULL;
 
     eat_whitespace(p);
+    node->attributes = attributes;
     if (strcmp(ident, "import") == 0)
     {
         node->type = NODE_IMPORT;
-        node->node.importNode.attributes = attributes;
         CHECKED_ASSIGN(node, node.importNode.path, parse_path);
     }
     else if (strcmp(ident, "data") == 0)
     {
         node->type = NODE_DATA;
-        node->node.dataNode.attributes = attributes;
         CHECKED_ASSIGN(node, node.dataNode.name, parse_ident);
         eat_whitespace(p);
         CHECKED_ASSIGN(node, node.dataNode.properties, parse_properties);
@@ -460,7 +507,6 @@ AstNode *parse_node(Parser *p)
     else if (strcmp(ident, "enum") == 0)
     {
         node->type = NODE_ENUM;
-        node->node.enumNode.attributes = attributes;
         CHECKED_ASSIGN(node, node.enumNode.name, parse_ident);
         eat_whitespace(p);
         CHECKED_ASSIGN(node, node.enumNode.values, parse_enum_values);
@@ -484,7 +530,7 @@ AstNode *parse(Parser *p)
         AstNode *node = parse_node(p);
         if (!node)
         {
-            FREE_LIST(AstNode, ast);
+            free_ast(ast);
             return NULL;
         }
         if (!ast)
@@ -544,7 +590,7 @@ Parser *minissd_create_parser(const char *input)
     return create_parser(input);
 }
 
-void free_parser(Parser *p)
+void minissd_free_parser(Parser *p)
 {
     free(p);
 }
@@ -555,32 +601,9 @@ AstNode *minissd_parse(Parser *p)
     return parse(p);
 }
 
-void free_ast(AstNode *ast)
+void minissd_free_ast(AstNode *ast)
 {
-    AstNode *current = ast;
-    while (current)
-    {
-        switch (current->type)
-        {
-        case NODE_IMPORT:
-            free(current->node.importNode.path);
-            free_attributes(current->node.importNode.attributes);
-            break;
-        case NODE_DATA:
-            free(current->node.dataNode.name);
-            free_properties(current->node.dataNode.properties);
-            free_attributes(current->node.dataNode.attributes);
-        case NODE_ENUM:
-            free(current->node.enumNode.name);
-            free_enum_values(current->node.enumNode.values);
-            free_attributes(current->node.enumNode.attributes);
-        default:
-            break;
-        }
-        AstNode *next = current->next;
-        free(current);
-        current = next;
-    };
+    free_ast(ast);
 }
 
 // AST Node accessors
@@ -607,19 +630,7 @@ const char *minissd_get_enum_name(const AstNode *node)
 // Attribute accessors
 Attribute *minissd_get_attributes(const AstNode *node)
 {
-    if (!node)
-        return NULL;
-    switch (node->type)
-    {
-    case NODE_IMPORT:
-        return node->node.importNode.attributes;
-    case NODE_DATA:
-        return node->node.dataNode.attributes;
-    case NODE_ENUM:
-        return node->node.enumNode.attributes;
-    default:
-        return NULL;
-    }
+    return node ? node->attributes : NULL;
 }
 
 const char *minissd_get_attribute_name(const Attribute *attr)
