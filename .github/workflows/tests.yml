@@ -18,22 +18,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up CMake
-        uses: cmake-action/setup-cmake@v2
-        with:
-          cmake-version: "3.20"
-
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake build-essential libgtest-dev valgrind
 
       - name: Initialize submodules
         run: git submodule update --init --recursive
 
-      - name: Build the project with CMake
-        run: |
-          mkdir build
-          cmake -B build
-          cmake --build build
+      - name: Build Project
+        uses: threeal/cmake-action@v2.1.0
 
       - name: Run tests with valgrind memory leak check
         run: |
