@@ -30,4 +30,4 @@ jobs:
       - name: Run tests with valgrind memory leak check
         run: |
           cd build
-          valgrind --leak-check=full --error-exitcode=1 ./tests
+          valgrind --leak-check=full --error-exitcode=1 ./tests/minissd_tests
