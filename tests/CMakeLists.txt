@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCES src/test_parser.cpp)
 
-add_executable(tests ${SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_link_libraries(tests PRIVATE gtest gtest_main)
-target_link_libraries(tests PRIVATE minissd)
+target_link_libraries(${PROJECT_NAME} PRIVATE gtest gtest_main)
+target_link_libraries(${PROJECT_NAME} PRIVATE minissd)

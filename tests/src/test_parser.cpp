@@ -5,7 +5,7 @@
 // Test for successful parsing of valid input
 TEST(ParserTest, ValidInput_Data)
 {
-    const char *source_code = "data Person { name: string, age: int }";
+    const char *source_code = "data Person { name: string, age: int };";
 
     Parser *parser = minissd_create_parser(source_code);
     AstNode *ast = minissd_parse(parser);
@@ -32,7 +32,7 @@ TEST(ParserTest, ValidInput_Data)
 // Test for successful parsing of enum nodes
 TEST(ParserTest, ValidInput_Enum)
 {
-    const char *source_code = "enum Color { Red = 1, Green, Blue }";
+    const char *source_code = "enum Color { Red = 1, Green, Blue };";
 
     Parser *parser = minissd_create_parser(source_code);
     AstNode *ast = minissd_parse(parser);
@@ -64,7 +64,7 @@ TEST(ParserTest, ValidInput_Enum)
 // Test for successful parsing of import nodes
 TEST(ParserTest, ValidInput_Import)
 {
-    const char *source_code = "import my::module";
+    const char *source_code = "import my::module;";
 
     Parser *parser = minissd_create_parser(source_code);
     AstNode *ast = minissd_parse(parser);
@@ -80,7 +80,7 @@ TEST(ParserTest, ValidInput_Import)
 // Test for valid input: No enum values
 TEST(ParserTest, ValidInput_MissingEnumValues)
 {
-    const char *source_code = "enum Color { Red, Green }";
+    const char *source_code = "enum Color { Red, Green };";
 
     Parser *parser = minissd_create_parser(source_code);
     AstNode *ast = minissd_parse(parser);
@@ -106,7 +106,7 @@ TEST(ParserTest, ValidInput_MissingEnumValues)
 // Test for invalid input: Missing type in data node
 TEST(ParserTest, InvalidInput_MissingType)
 {
-    const char *source_code = "data Person { name, age: int }"; // Missing type for 'name'
+    const char *source_code = "data Person { name, age: int };"; // Missing type for 'name'
 
     Parser *parser = minissd_create_parser(source_code);
     AstNode *ast = minissd_parse(parser);
@@ -134,13 +134,13 @@ TEST(ParserTest, InvalidInput_MissingBraces)
 // Test for invalid input: No enum values
 TEST(ParserTest, InvalidInput_NoEnumValues)
 {
-    const char *source_code = "enum Color {}"; // Missing closing brace
+    const char *source_code = "enum Color {};"; // Missing closing brace
 
     Parser *parser = minissd_create_parser(source_code);
     AstNode *ast = minissd_parse(parser);
 
     ASSERT_EQ(ast, nullptr); // Parsing should fail
-    ASSERT_STREQ(parser->error, "Error: Enum must have at least one value at line 1, column 14");
+    ASSERT_STREQ(parser->error, "Error: Enum must have at least one value at line 1, column 15");
 
     minissd_free_parser(parser);
 }
@@ -162,13 +162,13 @@ TEST(ParserTest, EmptyInput)
 // Test for edge case: Invalid character
 TEST(ParserTest, InvalidCharacter)
 {
-    const char *source_code = "data Person { name: string, age: int } @"; // Invalid character '@'
+    const char *source_code = "data Person { name: string, age: int }; @"; // Invalid character '@'
 
     Parser *parser = minissd_create_parser(source_code);
     AstNode *ast = minissd_parse(parser);
 
     ASSERT_EQ(ast, nullptr); // Parsing should fail due to invalid character
-    ASSERT_STREQ(parser->error, "Error: Expected identifier at line 1, column 41");
+    ASSERT_STREQ(parser->error, "Error: Expected identifier at line 1, column 42");
 
     minissd_free_parser(parser);
 }
@@ -176,7 +176,7 @@ TEST(ParserTest, InvalidCharacter)
 // Test for correctly parsing attributes in data node
 TEST(ParserTest, ValidInput_WithAttributes)
 {
-    const char *source_code = "data Person { #[attr1(name=\"value1\")] name: string, age: int }";
+    const char *source_code = "data Person { #[attr1(name=\"value1\")] name: string, age: int };";
 
     Parser *parser = minissd_create_parser(source_code);
     AstNode *ast = minissd_parse(parser);
@@ -205,7 +205,7 @@ TEST(ParserTest, ValidInput_WithAttributes)
 // Test for multiple attributes in the same node
 TEST(ParserTest, ValidInput_MultipleAttributes)
 {
-    const char *source_code = "data Person { #[attr1] #[attr2(name=\"value1\")] name: string, age: int }";
+    const char *source_code = "data Person { #[attr1] #[attr2(name=\"value1\")] name: string, age: int };";
 
     Parser *parser = minissd_create_parser(source_code);
     AstNode *ast = minissd_parse(parser);
@@ -238,7 +238,7 @@ TEST(ParserTest, ValidInput_MultipleAttributes)
 
 TEST(ParserTest, ValidInput_MultipleAttributes2)
 {
-    const char *source_code = "data Person { #[attr1, attr2(name=\"value1\")] name: string, age: int }";
+    const char *source_code = "data Person { #[attr1, attr2(name=\"value1\")] name: string, age: int };";
 
     Parser *parser = minissd_create_parser(source_code);
     AstNode *ast = minissd_parse(parser);
