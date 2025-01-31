@@ -57,6 +57,7 @@ int main(int argc, char **argv)
     {
         printf("Parsing failed: %s\n", parser->error);
         minissd_free_parser(parser);
+        free(source);
         return 1;
     }
 

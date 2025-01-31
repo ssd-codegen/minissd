@@ -289,6 +289,7 @@ parse_attributes(Parser *p)
         eat_whitespace(p);
         if (p->current != '[')
         {
+            free_attributes(head);
             error(p, "Expected '[' after attribute");
             return NULL;
         }
@@ -333,6 +334,7 @@ parse_attributes(Parser *p)
                         free_arguments(arg);
                         free_arguments(arg_head);
                         free_attributes(attr);
+                        free_attributes(head);
                         return NULL;
                     };
 
@@ -347,6 +349,7 @@ parse_attributes(Parser *p)
                             free_arguments(arg);
                             free_arguments(arg_head);
                             free_attributes(attr);
+                            free_attributes(head);
                             return NULL;
                         };
                     }
@@ -459,6 +462,7 @@ parse_enum_variants(Parser *p)
             if (!ev->value)
             {
                 free_enum_variants(ev);
+                free_enum_variants(head);
                 return NULL;
             };
         }
@@ -592,6 +596,7 @@ parse_node(Parser *p)
     char *ident = parse_identifier(p);
     if (!ident)
     {
+        free_attributes(attributes);
         return NULL;
     };
     AstNode *node = (AstNode *)malloc(sizeof(AstNode));
@@ -607,10 +612,7 @@ parse_node(Parser *p)
         node->node.importNode.path = parse_path(p);
         if (!node->node.importNode.path)
         {
-            if (ident)
-            {
-                free(ident);
-            }
+            free(ident);
             free_ast(node);
             return NULL;
         };
@@ -621,10 +623,7 @@ parse_node(Parser *p)
         node->node.dataNode.name = parse_identifier(p);
         if (!node->node.dataNode.name)
         {
-            if (ident)
-            {
-                free(ident);
-            }
+            free(ident);
             free_ast(node);
             return NULL;
         };
@@ -632,10 +631,7 @@ parse_node(Parser *p)
         node->node.dataNode.ll_properties = parse_properties(p);
         if (!node->node.dataNode.ll_properties)
         {
-            if (ident)
-            {
-                free(ident);
-            }
+            free(ident);
             free_ast(node);
             return NULL;
         };
@@ -646,10 +642,7 @@ parse_node(Parser *p)
         node->node.enumNode.name = parse_identifier(p);
         if (!node->node.enumNode.name)
         {
-            if (ident)
-            {
-                free(ident);
-            }
+            free(ident);
             free_ast(node);
             return NULL;
         };
@@ -657,10 +650,7 @@ parse_node(Parser *p)
         node->node.enumNode.ll_variants = parse_enum_variants(p);
         if (!node->node.enumNode.ll_variants)
         {
-            if (ident)
-            {
-                free(ident);
-            }
+            free(ident);
             free_ast(node);
             return NULL;
         };
