@@ -186,7 +186,7 @@ char *parse_path(Parser *p)
     char buffer[MAX_TOKEN_SIZE];
     int length = 0;
     eat_whitespace(p);
-    while (p->current != '\0' && (is_alphanumeric(p->current) || p->current == '_' || p->current == ':'))
+    while (length < MAX_TOKEN_SIZE && p->current != '\0' && (is_alphanumeric(p->current) || p->current == ':'))
     {
         buffer[length++] = p->current;
         advance(p);
@@ -204,7 +204,7 @@ int *parse_int(Parser *p)
 {
     char buffer[MAX_TOKEN_SIZE];
     int length = 0;
-    while (isdigit(p->current))
+    while (length < MAX_TOKEN_SIZE && isdigit(p->current))
     {
         buffer[length++] = p->current;
         advance(p);
@@ -231,7 +231,7 @@ char *parse_string(Parser *p)
     advance(p);
     char buffer[MAX_TOKEN_SIZE];
     int length = 0;
-    while (p->current != '"' && p->current != '\0')
+    while (length < MAX_TOKEN_SIZE && p->current != '"' && p->current != '\0')
     {
         buffer[length++] = p->current;
         advance(p);
@@ -250,7 +250,7 @@ char *parse_identifier(Parser *p)
 {
     char buffer[MAX_TOKEN_SIZE];
     int length = 0;
-    while (is_alphanumeric(p->current))
+    while (length < MAX_TOKEN_SIZE && is_alphanumeric(p->current))
     {
         buffer[length++] = p->current;
         advance(p);
