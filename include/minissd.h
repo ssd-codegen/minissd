@@ -25,7 +25,7 @@ extern "C"
     typedef struct Attribute
     {
         char *name;
-        Argument *arguments;
+        Argument *ll_arguments;
         struct Attribute *next;
     } Attribute;
 
@@ -37,13 +37,13 @@ extern "C"
         struct Property *next;
     } Property;
 
-    typedef struct EnumValue
+    typedef struct EnumVariant
     {
         Attribute *attributes;
         char *name;
         int *value; // Nullable
-        struct EnumValue *next;
-    } EnumValue;
+        struct EnumVariant *next;
+    } EnumVariant;
 
     typedef struct Import
     {
@@ -53,13 +53,13 @@ extern "C"
     typedef struct Data
     {
         char *name;
-        Property *properties;
+        Property *ll_properties;
     } Data;
 
     typedef struct Enum
     {
         char *name;
-        EnumValue *values;
+        EnumVariant *ll_variants;
     } Enum;
 
     typedef enum
@@ -72,7 +72,7 @@ extern "C"
     typedef struct AstNode
     {
         NodeType type;
-        Attribute *attributes;
+        Attribute *ll_attributes;
         union
         {
             Import importNode;
@@ -111,21 +111,21 @@ extern "C"
     const char *minissd_get_attribute_name(const Attribute *attr);
     Argument *minissd_get_attribute_arguments(const Attribute *attr);
 
-    // Property and EnumValue accessors
+    // Property and EnumVariant accessors
     Property *minissd_get_properties(const AstNode *node);
     const char *minissd_get_property_name(const Property *prop);
     Attribute *minissd_get_property_attributes(const Property *prop);
     const char *minissd_get_property_type(const Property *prop);
 
-    EnumValue *minissd_get_enum_values(const AstNode *node);
-    const char *minissd_get_enum_value_name(const EnumValue *value);
-    Attribute *minissd_get_enum_value_attributes(const EnumValue *value);
-    int minissd_get_enum_value(const EnumValue *value, bool *has_value);
+    EnumVariant *minissd_get_enum_variants(const AstNode *node);
+    const char *minissd_get_enum_variant_name(const EnumVariant *value);
+    Attribute *minissd_get_enum_variant_attributes(const EnumVariant *value);
+    int minissd_get_enum_variant(const EnumVariant *value, bool *has_value);
 
     // Traversal functions
     AstNode *minissd_get_next_node(const AstNode *node);
     Property *minissd_get_next_property(const Property *prop);
-    EnumValue *minissd_get_next_enum_value(const EnumValue *value);
+    EnumVariant *minissd_get_next_enum_value(const EnumVariant *value);
     Attribute *minissd_get_next_attribute(const Attribute *attr);
     Argument *minissd_get_next_argument(const Argument *arg);
 

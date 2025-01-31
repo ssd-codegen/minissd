@@ -11,7 +11,15 @@
         "*.prf": "ini",
         "*.dhall": "haskell",
         "bsconfig.json": "jsonc",
-        "minissd.h": "c"
+        "minissd.h": "c",
+        "chrono": "cpp",
+        "functional": "cpp",
+        "optional": "cpp",
+        "system_error": "cpp",
+        "type_traits": "cpp",
+        "xlocmon": "cpp",
+        "xlocnum": "cpp",
+        "xtr1common": "cpp"
     },
     "clang-tidy.compilerArgs": [
         "-Iinclude",

@@ -59,7 +59,7 @@ void free_attributes(Attribute *attrs)
         {
             free(current_attr->name);
         }
-        free_arguments(current_attr->arguments);
+        free_arguments(current_attr->ll_arguments);
         Attribute *next_attr = current_attr->next;
         free(current_attr);
         current_attr = next_attr;
@@ -86,9 +86,9 @@ void free_properties(Property *prop)
     };
 }
 
-void free_enum_values(EnumValue *values)
+void free_enum_variants(EnumVariant *variants)
 {
-    EnumValue *current = values;
+    EnumVariant *current = variants;
     while (current)
     {
         if (current->name)
@@ -100,7 +100,7 @@ void free_enum_values(EnumValue *values)
             free(current->value);
         }
         free_attributes(current->attributes);
-        EnumValue *next = current->next;
+        EnumVariant *next = current->next;
         free(current);
         current = next;
     };
@@ -111,7 +111,7 @@ void free_ast(AstNode *ast)
     AstNode *current = ast;
     while (current)
     {
-        free_attributes(current->attributes);
+        free_attributes(current->ll_attributes);
         switch (current->type)
         {
         case NODE_IMPORT:
@@ -125,14 +125,14 @@ void free_ast(AstNode *ast)
             {
                 free(current->node.dataNode.name);
             }
-            free_properties(current->node.dataNode.properties);
+            free_properties(current->node.dataNode.ll_properties);
             break;
         case NODE_ENUM:
             if (current->node.enumNode.name)
             {
                 free(current->node.enumNode.name);
             }
-            free_enum_values(current->node.enumNode.values);
+            free_enum_variants(current->node.enumNode.ll_variants);
             break;
         default:
             break;
@@ -246,7 +246,7 @@ char *parse_string(Parser *p)
     return strdup_c99(buffer);
 }
 
-char *parse_ident(Parser *p)
+char *parse_identifier(Parser *p)
 {
     char buffer[MAX_TOKEN_SIZE];
     int length = 0;
@@ -284,11 +284,11 @@ Attribute *parse_attributes(Parser *p)
             Attribute *attr = (Attribute *)malloc(sizeof(Attribute));
             assert(attr);
             attr->name = NULL;
-            attr->arguments = NULL;
+            attr->ll_arguments = NULL;
             attr->next = NULL;
 
             eat_whitespace(p);
-            attr->name = parse_ident(p);
+            attr->name = parse_identifier(p);
             if (!attr->name)
             {
                 free_attributes(attr);
@@ -312,7 +312,7 @@ Attribute *parse_attributes(Parser *p)
                     arg->value = NULL;
 
                     eat_whitespace(p);
-                    arg->key = parse_ident(p);
+                    arg->key = parse_identifier(p);
                     if (!arg->key)
                     {
                         free_arguments(arg);
@@ -365,7 +365,7 @@ Attribute *parse_attributes(Parser *p)
                     return NULL;
                 }
                 advance(p);
-                attr->arguments = arg_head;
+                attr->ll_arguments = arg_head;
             }
 
             if (!head)
@@ -399,7 +399,7 @@ Attribute *parse_attributes(Parser *p)
     return head;
 }
 
-EnumValue *parse_enum_values(Parser *p)
+EnumVariant *parse_enum_variants(Parser *p)
 {
     if (p->current != '{')
     {
@@ -408,13 +408,13 @@ EnumValue *parse_enum_values(Parser *p)
     }
     advance(p);
 
-    EnumValue *head = NULL, *tail = NULL;
+    EnumVariant *head = NULL, *tail = NULL;
 
     eat_whitespace(p);
     while (p->current != '}')
     {
 
-        EnumValue *ev = (EnumValue *)malloc(sizeof(EnumValue));
+        EnumVariant *ev = (EnumVariant *)malloc(sizeof(EnumVariant));
         assert(ev);
         ev->next = NULL;
         ev->value = NULL;
@@ -425,11 +425,11 @@ EnumValue *parse_enum_values(Parser *p)
         ev->attributes = parse_attributes(p);
 
         eat_whitespace(p);
-        ev->name = parse_ident(p);
+        ev->name = parse_identifier(p);
         if (!ev->name)
         {
-            free_enum_values(ev);
-            free_enum_values(head);
+            free_enum_variants(ev);
+            free_enum_variants(head);
             return NULL;
         };
 
@@ -442,7 +442,7 @@ EnumValue *parse_enum_values(Parser *p)
             ev->value = parse_int(p);
             if (!ev->value)
             {
-                free_enum_values(ev);
+                free_enum_variants(ev);
                 return NULL;
             };
         }
@@ -470,13 +470,13 @@ EnumValue *parse_enum_values(Parser *p)
     if (p->current != '}')
     {
         error(p, "Expected ',' after enum value");
-        free_enum_values(head);
+        free_enum_variants(head);
         return NULL;
     }
     advance(p);
     if (!head)
     {
-        error(p, "Enum must have at least one value");
+        error(p, "Enum must have at least one variant");
         return NULL;
     }
     return head;
@@ -508,7 +508,7 @@ Property *parse_properties(Parser *p)
         prop->attributes = parse_attributes(p);
 
         eat_whitespace(p);
-        prop->name = parse_ident(p);
+        prop->name = parse_identifier(p);
         if (!prop->name)
         {
             free_properties(prop);
@@ -527,7 +527,7 @@ Property *parse_properties(Parser *p)
         advance(p);
 
         eat_whitespace(p);
-        prop->type = parse_ident(p);
+        prop->type = parse_identifier(p);
         if (!prop->type)
         {
             free_properties(prop);
@@ -571,7 +571,7 @@ AstNode *parse_node(Parser *p)
     Attribute *attributes = parse_attributes(p);
 
     eat_whitespace(p);
-    char *ident = parse_ident(p);
+    char *ident = parse_identifier(p);
     if (!ident)
     {
         return NULL;
@@ -579,10 +579,10 @@ AstNode *parse_node(Parser *p)
     AstNode *node = (AstNode *)malloc(sizeof(AstNode));
     assert(node);
     node->next = NULL;
-    node->attributes = NULL;
+    node->ll_attributes = NULL;
 
     eat_whitespace(p);
-    node->attributes = attributes;
+    node->ll_attributes = attributes;
     if (strcmp(ident, "import") == 0)
     {
         node->type = NODE_IMPORT;
@@ -600,7 +600,7 @@ AstNode *parse_node(Parser *p)
     else if (strcmp(ident, "data") == 0)
     {
         node->type = NODE_DATA;
-        node->node.dataNode.name = parse_ident(p);
+        node->node.dataNode.name = parse_identifier(p);
         if (!node->node.dataNode.name)
         {
             if (ident)
@@ -611,8 +611,8 @@ AstNode *parse_node(Parser *p)
             return NULL;
         };
         eat_whitespace(p);
-        node->node.dataNode.properties = parse_properties(p);
-        if (!node->node.dataNode.properties)
+        node->node.dataNode.ll_properties = parse_properties(p);
+        if (!node->node.dataNode.ll_properties)
         {
             if (ident)
             {
@@ -625,7 +625,7 @@ AstNode *parse_node(Parser *p)
     else if (strcmp(ident, "enum") == 0)
     {
         node->type = NODE_ENUM;
-        node->node.enumNode.name = parse_ident(p);
+        node->node.enumNode.name = parse_identifier(p);
         if (!node->node.enumNode.name)
         {
             if (ident)
@@ -636,8 +636,8 @@ AstNode *parse_node(Parser *p)
             return NULL;
         };
         eat_whitespace(p);
-        node->node.enumNode.values = parse_enum_values(p);
-        if (!node->node.enumNode.values)
+        node->node.enumNode.ll_variants = parse_enum_variants(p);
+        if (!node->node.enumNode.ll_variants)
         {
             if (ident)
             {
@@ -788,7 +788,7 @@ const char *minissd_get_enum_name(const AstNode *node)
 // Attribute accessors
 Attribute *minissd_get_attributes(const AstNode *node)
 {
-    return node ? node->attributes : NULL;
+    return node ? node->ll_attributes : NULL;
 }
 
 const char *minissd_get_attribute_name(const Attribute *attr)
@@ -798,13 +798,13 @@ const char *minissd_get_attribute_name(const Attribute *attr)
 
 Argument *minissd_get_attribute_arguments(const Attribute *attr)
 {
-    return attr ? attr->arguments : NULL;
+    return attr ? attr->ll_arguments : NULL;
 }
 
 // Property accessors
 Property *minissd_get_properties(const AstNode *node)
 {
-    return (node && node->type == NODE_DATA) ? node->node.dataNode.properties : NULL;
+    return (node && node->type == NODE_DATA) ? node->node.dataNode.ll_properties : NULL;
 }
 
 const char *minissd_get_property_name(const Property *prop)
@@ -823,22 +823,22 @@ const char *minissd_get_property_type(const Property *prop)
 }
 
 // Enum Value accessors
-EnumValue *minissd_get_enum_values(const AstNode *node)
+EnumVariant *minissd_get_enum_variants(const AstNode *node)
 {
-    return (node && node->type == NODE_ENUM) ? node->node.enumNode.values : NULL;
+    return (node && node->type == NODE_ENUM) ? node->node.enumNode.ll_variants : NULL;
 }
 
-const char *minissd_get_enum_value_name(const EnumValue *value)
+const char *minissd_get_enum_variant_name(const EnumVariant *value)
 {
     return value ? value->name : NULL;
 }
 
-Attribute *minissd_get_enum_value_attributes(const EnumValue *value)
+Attribute *minissd_get_enum_variant_attributes(const EnumVariant *value)
 {
     return value ? value->attributes : NULL;
 }
 
-int minissd_get_enum_value(const EnumValue *value, bool *has_value)
+int minissd_get_enum_variant(const EnumVariant *value, bool *has_value)
 {
     if (!value || !value->value)
     {
@@ -862,7 +862,7 @@ Property *minissd_get_next_property(const Property *prop)
     return prop ? prop->next : NULL;
 }
 
-EnumValue *minissd_get_next_enum_value(const EnumValue *value)
+EnumVariant *minissd_get_next_enum_value(const EnumVariant *value)
 {
     return value ? value->next : NULL;
 }

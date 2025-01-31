@@ -88,11 +88,11 @@ int main(int argc, char **argv)
             printf("  Name: %s\n", minissd_get_enum_name(node));
             print_attributes(minissd_get_attributes(node));
 
-            for (EnumValue *value = minissd_get_enum_values(node); value; value = minissd_get_next_enum_value(value))
+            for (EnumVariant *value = minissd_get_enum_variants(node); value; value = minissd_get_next_enum_value(value))
             {
                 bool has_value;
-                int val = minissd_get_enum_value(value, &has_value);
-                printf("  Enum Value: %s", minissd_get_enum_value_name(value));
+                int val = minissd_get_enum_variant(value, &has_value);
+                printf("  Enum Value: %s", minissd_get_enum_variant_name(value));
                 if (has_value)
                 {
                     printf(" = %d", val);

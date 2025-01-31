@@ -51,21 +51,21 @@ TEST_F(ParserTest, ValidInput_Enum)
     ASSERT_EQ(minissd_get_node_type(ast), NODE_ENUM);  // Check if node type is 'enum'
     ASSERT_STREQ(minissd_get_enum_name(ast), "Color"); // Check enum node name
 
-    // Check enum values
-    EnumValue *value = minissd_get_enum_values(ast);
-    ASSERT_NE(value, nullptr); // Ensure there are enum values
-    ASSERT_STREQ(minissd_get_enum_value_name(value), "Red");
-    ASSERT_EQ(minissd_get_enum_value(value, nullptr), 1); // Check value for 'Red'
+    // Check enum variants
+    EnumVariant *variant = minissd_get_enum_variants(ast);
+    ASSERT_NE(variant, nullptr); // Ensure there are enum variants
+    ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
+    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 1); // Check variant for 'Red'
 
-    value = minissd_get_next_enum_value(value);
-    ASSERT_NE(value, nullptr);
-    ASSERT_STREQ(minissd_get_enum_value_name(value), "Green");
-    ASSERT_EQ(minissd_get_enum_value(value, nullptr), 0); // Default value for 'Green'
+    variant = minissd_get_next_enum_value(variant);
+    ASSERT_NE(variant, nullptr);
+    ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Green");
+    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 0); // Default variant for 'Green'
 
-    value = minissd_get_next_enum_value(value);
-    ASSERT_NE(value, nullptr);
-    ASSERT_STREQ(minissd_get_enum_value_name(value), "Blue");
-    ASSERT_EQ(minissd_get_enum_value(value, nullptr), 0); // Default value for 'Blue'
+    variant = minissd_get_next_enum_value(variant);
+    ASSERT_NE(variant, nullptr);
+    ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Blue");
+    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 0); // Default variant for 'Blue'
 }
 
 // Test for successful parsing of import nodes
@@ -93,15 +93,15 @@ TEST_F(ParserTest, ValidInput_MissingEnumValues)
     ASSERT_EQ(minissd_get_node_type(ast), NODE_ENUM);
     ASSERT_STREQ(minissd_get_enum_name(ast), "Color");
 
-    EnumValue *value = minissd_get_enum_values(ast);
-    ASSERT_NE(value, nullptr);
-    ASSERT_STREQ(minissd_get_enum_value_name(value), "Red");
-    ASSERT_EQ(minissd_get_enum_value(value, nullptr), 0); // Default value for 'Red'
+    EnumVariant *variant = minissd_get_enum_variants(ast);
+    ASSERT_NE(variant, nullptr);
+    ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
+    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 0); // Default variant for 'Red'
 
-    value = minissd_get_next_enum_value(value);
-    ASSERT_NE(value, nullptr);
-    ASSERT_STREQ(minissd_get_enum_value_name(value), "Green");
-    ASSERT_EQ(minissd_get_enum_value(value, nullptr), 0); // Default value for 'Green'
+    variant = minissd_get_next_enum_value(variant);
+    ASSERT_NE(variant, nullptr);
+    ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Green");
+    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 0); // Default variant for 'Green'
 }
 
 // Test for invalid input: Missing type in data node
@@ -128,8 +128,8 @@ TEST_F(ParserTest, InvalidInput_MissingBraces)
     ASSERT_STREQ(parser->error, "Error: Expected '{' after data name at line 1, column 14");
 }
 
-// Test for invalid input: No enum values
-TEST_F(ParserTest, InvalidInput_NoEnumValues)
+// Test for invalid input: No enum variants
+TEST_F(ParserTest, InvalidInput_NoEnumVariants)
 {
     const char *source_code = "enum Color {};"; // Missing closing brace
 
@@ -137,7 +137,7 @@ TEST_F(ParserTest, InvalidInput_NoEnumValues)
     ast = minissd_parse(parser);
 
     ASSERT_EQ(ast, nullptr); // Parsing should fail
-    ASSERT_STREQ(parser->error, "Error: Enum must have at least one value at line 1, column 15");
+    ASSERT_STREQ(parser->error, "Error: Enum must have at least one variant at line 1, column 15");
 }
 
 // Test for empty input (edge case)
