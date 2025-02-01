@@ -297,11 +297,8 @@ parse_attributes(Parser *p)
         eat_whitespace(p);
         while (p->current != ']')
         {
-            Attribute *attr = (Attribute *)malloc(sizeof(Attribute));
+            Attribute *attr = (Attribute *)calloc(1, sizeof(Attribute));
             assert(attr);
-            attr->name = NULL;
-            attr->ll_arguments = NULL;
-            attr->next = NULL;
 
             eat_whitespace(p);
             attr->name = parse_identifier(p);
@@ -321,11 +318,8 @@ parse_attributes(Parser *p)
                 eat_whitespace(p);
                 while (p->current != ')')
                 {
-                    Argument *arg = (Argument *)malloc(sizeof(Argument));
+                    Argument *arg = (Argument *)calloc(1, sizeof(Argument));
                     assert(arg);
-                    arg->key = NULL;
-                    arg->next = NULL;
-                    arg->value = NULL;
 
                     eat_whitespace(p);
                     arg->key = parse_identifier(p);
@@ -433,12 +427,8 @@ parse_enum_variants(Parser *p)
     while (p->current != '}')
     {
 
-        EnumVariant *ev = (EnumVariant *)malloc(sizeof(EnumVariant));
+        EnumVariant *ev = (EnumVariant *)calloc(1, sizeof(EnumVariant));
         assert(ev);
-        ev->next = NULL;
-        ev->value = NULL;
-        ev->attributes = NULL;
-        ev->name = NULL;
 
         eat_whitespace(p);
         ev->attributes = parse_attributes(p);
@@ -518,12 +508,8 @@ parse_properties(Parser *p)
     while (p->current != '}')
     {
 
-        Property *prop = (Property *)malloc(sizeof(Property));
+        Property *prop = (Property *)calloc(1, sizeof(Property));
         assert(prop);
-        prop->next = NULL;
-        prop->attributes = NULL;
-        prop->name = NULL;
-        prop->type = NULL;
 
         eat_whitespace(p);
         prop->attributes = parse_attributes(p);
@@ -599,10 +585,8 @@ parse_node(Parser *p)
         free_attributes(attributes);
         return NULL;
     };
-    AstNode *node = (AstNode *)malloc(sizeof(AstNode));
+    AstNode *node = (AstNode *)calloc(1, sizeof(AstNode));
     assert(node);
-    node->next = NULL;
-    node->ll_attributes = NULL;
 
     eat_whitespace(p);
     node->ll_attributes = attributes;
@@ -721,12 +705,9 @@ static Parser *
 create_parser(const char *input)
 {
     assert(input);
-    Parser *p = (Parser *)malloc(sizeof(Parser));
+    Parser *p = (Parser *)calloc(1, sizeof(Parser));
     assert(p);
     p->input = input;
-    memset(p->error, 0, MAX_ERROR_SIZE);
-    p->current = 0;
-    p->index = 0;
     p->line = 1;
     p->column = 1;
     return p;
