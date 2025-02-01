@@ -197,8 +197,14 @@ parse_path(Parser *p)
     char buffer[MAX_TOKEN_SIZE + 1];
     int length = 0;
     eat_whitespace(p);
-    while (length < MAX_TOKEN_SIZE && p->current != '\0' && (is_alphanumeric(p->current) || p->current == ':'))
+    while (length <= MAX_TOKEN_SIZE && p->current != '\0' && (is_alphanumeric(p->current) || p->current == ':'))
     {
+        if (length == MAX_TOKEN_SIZE)
+        {
+            error(p, "Path length exceeds maximum token size");
+            return NULL;
+        }
+
         buffer[length++] = p->current;
         advance(p);
     }
@@ -216,8 +222,13 @@ parse_int(Parser *p)
 {
     char buffer[MAX_TOKEN_SIZE + 1];
     int length = 0;
-    while (length < MAX_TOKEN_SIZE && isdigit(p->current))
+    while (length <= MAX_TOKEN_SIZE && isdigit(p->current))
     {
+        if (length == MAX_TOKEN_SIZE)
+        {
+            error(p, "Integer length exceeds maximum token size");
+            return NULL;
+        }
         buffer[length++] = p->current;
         advance(p);
     }
@@ -244,8 +255,13 @@ parse_string(Parser *p)
     advance(p);
     char buffer[MAX_TOKEN_SIZE + 1];
     int length = 0;
-    while (length < MAX_TOKEN_SIZE && p->current != '"' && p->current != '\0')
+    while (length <= MAX_TOKEN_SIZE && p->current != '"' && p->current != '\0')
     {
+        if (length == MAX_TOKEN_SIZE)
+        {
+            error(p, "String length exceeds maximum token size");
+            return NULL;
+        }
         buffer[length++] = p->current;
         advance(p);
     }
@@ -264,8 +280,13 @@ parse_identifier(Parser *p)
 {
     char buffer[MAX_TOKEN_SIZE + 1];
     int length = 0;
-    while (length < MAX_TOKEN_SIZE && is_alphanumeric(p->current))
+    while (length <= MAX_TOKEN_SIZE && is_alphanumeric(p->current))
     {
+        if (length == MAX_TOKEN_SIZE)
+        {
+            error(p, "Identifier length exceeds maximum token size");
+            return NULL;
+        }
         buffer[length++] = p->current;
         advance(p);
     }
