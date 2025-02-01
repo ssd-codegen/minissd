@@ -7,7 +7,8 @@
 #include <stdbool.h>
 #include <assert.h>
 
-char *strdup_c99(const char *s)
+static char *
+strdup_c99(const char *s)
 {
     if (s == NULL)
         return NULL;
@@ -31,7 +32,8 @@ char *strdup_c99(const char *s)
     }
 
 // Free functions
-void free_arguments(Argument *args)
+static void
+free_arguments(Argument *args)
 {
     Argument *current = args;
     while (current)
@@ -50,7 +52,8 @@ void free_arguments(Argument *args)
     };
 }
 
-void free_attributes(Attribute *attrs)
+static void
+free_attributes(Attribute *attrs)
 {
     Attribute *current_attr = attrs;
     while (current_attr)
@@ -66,7 +69,8 @@ void free_attributes(Attribute *attrs)
     };
 }
 
-void free_properties(Property *prop)
+static void
+free_properties(Property *prop)
 {
     Property *current = prop;
     while (current)
@@ -86,7 +90,8 @@ void free_properties(Property *prop)
     };
 }
 
-void free_enum_variants(EnumVariant *variants)
+static void
+free_enum_variants(EnumVariant *variants)
 {
     EnumVariant *current = variants;
     while (current)
@@ -106,7 +111,8 @@ void free_enum_variants(EnumVariant *variants)
     };
 }
 
-void free_ast(AstNode *ast)
+static void
+free_ast(AstNode *ast)
 {
     AstNode *current = ast;
     while (current)
@@ -144,12 +150,14 @@ void free_ast(AstNode *ast)
     };
 }
 
-void error(Parser *p, const char *message)
+static void
+error(Parser *p, const char *message)
 {
     snprintf(p->error, MAX_ERROR_SIZE, "Error: %s at line %d, column %d", message, p->line, p->column);
 }
 
-void advance(Parser *p)
+static void
+advance(Parser *p)
 {
     if (p->input[p->index] == '\0')
     {
@@ -168,7 +176,8 @@ void advance(Parser *p)
     }
 }
 
-void eat_whitespace(Parser *p)
+static void
+eat_whitespace(Parser *p)
 {
     while (isspace(p->current))
     {
@@ -176,12 +185,14 @@ void eat_whitespace(Parser *p)
     }
 }
 
-int is_alphanumeric(char c)
+static int
+is_alphanumeric(char c)
 {
     return isalnum(c) || c == '_';
 }
 
-char *parse_path(Parser *p)
+static char *
+parse_path(Parser *p)
 {
     char buffer[MAX_TOKEN_SIZE];
     int length = 0;
@@ -200,7 +211,8 @@ char *parse_path(Parser *p)
     return strdup_c99(buffer);
 }
 
-int *parse_int(Parser *p)
+static int *
+parse_int(Parser *p)
 {
     char buffer[MAX_TOKEN_SIZE];
     int length = 0;
@@ -221,7 +233,8 @@ int *parse_int(Parser *p)
     return value;
 }
 
-char *parse_string(Parser *p)
+static char *
+parse_string(Parser *p)
 {
     if (p->current != '"')
     {
@@ -246,7 +259,8 @@ char *parse_string(Parser *p)
     return strdup_c99(buffer);
 }
 
-char *parse_identifier(Parser *p)
+static char *
+parse_identifier(Parser *p)
 {
     char buffer[MAX_TOKEN_SIZE];
     int length = 0;
@@ -264,7 +278,8 @@ char *parse_identifier(Parser *p)
     return strdup_c99(buffer);
 }
 
-Attribute *parse_attributes(Parser *p)
+static Attribute *
+parse_attributes(Parser *p)
 {
     Attribute *head = NULL, *tail = NULL;
     eat_whitespace(p);
@@ -399,7 +414,8 @@ Attribute *parse_attributes(Parser *p)
     return head;
 }
 
-EnumVariant *parse_enum_variants(Parser *p)
+static EnumVariant *
+parse_enum_variants(Parser *p)
 {
     if (p->current != '{')
     {
@@ -482,7 +498,8 @@ EnumVariant *parse_enum_variants(Parser *p)
     return head;
 }
 
-Property *parse_properties(Parser *p)
+static Property *
+parse_properties(Parser *p)
 {
     if (p->current != '{')
     {
@@ -565,7 +582,8 @@ Property *parse_properties(Parser *p)
     return head;
 }
 
-AstNode *parse_node(Parser *p)
+static AstNode *
+parse_node(Parser *p)
 {
     eat_whitespace(p);
     Attribute *attributes = parse_attributes(p);
@@ -679,7 +697,8 @@ AstNode *parse_node(Parser *p)
     return node;
 }
 
-AstNode *parse(Parser *p)
+static AstNode *
+parse(Parser *p)
 {
     advance(p);
     AstNode *ast = NULL, *last = NULL;
@@ -708,7 +727,8 @@ AstNode *parse(Parser *p)
     return ast;
 }
 
-Parser *create_parser(const char *input)
+static Parser *
+create_parser(const char *input)
 {
     assert(input);
     Parser *p = (Parser *)malloc(sizeof(Parser));
@@ -722,7 +742,8 @@ Parser *create_parser(const char *input)
     return p;
 }
 
-void print_ast(AstNode *ast)
+static void
+print_ast(AstNode *ast)
 {
     while (ast)
     {
