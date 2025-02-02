@@ -100,7 +100,7 @@ int main(int argc, char **argv)
             for (EnumVariant const *value = minissd_get_enum_variants(node); value; value = minissd_get_next_enum_variant(value))
             {
                 bool has_value;
-                int val = minissd_get_enum_variant(value, &has_value);
+                int val = minissd_get_enum_variant_value(value, &has_value);
                 printf("  Enum Variant: %s", minissd_get_enum_variant_name(value));
                 if (has_value)
                 {

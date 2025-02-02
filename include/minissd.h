@@ -143,7 +143,7 @@ extern "C"
     AstNode *minissd_parse(Parser *p);
     void minissd_free_ast(AstNode *ast);
 
-    // AST Node accessors
+    // AST Node Accessors
     NodeType const *
     minissd_get_node_type(AstNode const *node);
 
@@ -157,109 +157,116 @@ extern "C"
     minissd_get_enum_name(AstNode const *node);
 
     char const *
-    minissd_get_handler_name(Handler const *node);
+    minissd_get_service_name(AstNode const *node);
 
-    char const *
-    minissd_get_handler_return_type(Handler const *handler);
-
-    char const *
-    minissd_get_event_name(Event const *event);
-
-    // Attribute accessors
-    Attribute const *
-    minissd_get_attributes(AstNode const *node);
-
-    char const *
-    minissd_get_attribute_name(Attribute const *attr);
-
-    AttributeParameter const *
-    minissd_get_attribute_parameters(Attribute const *attr);
-
-    // Property and EnumVariant accessors
     Property const *
     minissd_get_properties(AstNode const *node);
-
-    char const *
-    minissd_get_property_name(Property const *prop);
-
-    Attribute const *
-    minissd_get_property_attributes(Property const *prop);
-
-    char const *
-    minissd_get_property_type(Property const *prop);
 
     EnumVariant const *
     minissd_get_enum_variants(AstNode const *node);
 
-    char const *
-    minissd_get_enum_variant_name(EnumVariant const *value);
-
-    Attribute const *
-    minissd_get_enum_variant_attributes(EnumVariant const *value);
-
-    int minissd_get_enum_variant(EnumVariant const *value, bool *has_value);
-
-    char const *
-    minissd_get_service_name(AstNode const *node);
-
-    Argument const *
-    minissd_get_handler_arguments(Handler const *node);
-
-    Argument const *
-    minissd_get_event_arguments(Event const *event);
-
-    char const *
-    minissd_get_argument_name(Argument const *prop);
-
-    Attribute const *
-    minissd_get_argument_attributes(Argument const *prop);
-
-    char const *
-    minissd_get_argument_type(Argument const *prop);
-
     Dependency const *
     minissd_get_dependencies(AstNode const *node);
+
     Handler const *
     minissd_get_handlers(AstNode const *node);
 
     Event const *
     minissd_get_events(AstNode const *node);
 
-    Dependency const *
-    minissd_get_next_dependency(Dependency const *dep);
+    Attribute const *
+    minissd_get_attributes(AstNode const *node);
+
+    AstNode const *
+    minissd_get_next_node(AstNode const *node);
+
+    // Handler Accessors
+    char const *
+    minissd_get_handler_name(Handler const *node);
+
+    char const *
+    minissd_get_handler_return_type(Handler const *handler);
+
+    Argument const *
+    minissd_get_handler_arguments(Handler const *node);
 
     Handler const *
     minissd_get_next_handler(Handler const *handler);
 
+    // Event Accessors
+    char const *
+    minissd_get_event_name(Event const *event);
+
+    Argument const *
+    minissd_get_event_arguments(Event const *event);
+
     Event const *
     minissd_get_next_event(Event const *event);
 
-    char const *minissd_get_dependency_path(Dependency const *dep);
+    // Dependency Accessors
+    char const *
+    minissd_get_dependency_path(Dependency const *dep);
 
-    // Traversal functions
-    AstNode const *
-    minissd_get_next_node(AstNode const *node);
+    Dependency const *
+    minissd_get_next_dependency(Dependency const *dep);
+
+    // Property Accessors
+    char const *
+    minissd_get_property_name(Property const *prop);
+
+    char const *
+    minissd_get_property_type(Property const *prop);
+
+    Attribute const *
+    minissd_get_property_attributes(Property const *prop);
 
     Property const *
     minissd_get_next_property(Property const *prop);
 
+    // Enum Variant Accessors
+    char const *
+    minissd_get_enum_variant_name(EnumVariant const *value);
+
+    int minissd_get_enum_variant_value(EnumVariant const *value, bool *has_value);
+
+    Attribute const *
+    minissd_get_enum_variant_attributes(EnumVariant const *value);
+
     EnumVariant const *
     minissd_get_next_enum_variant(EnumVariant const *value);
+
+    // Argument Accessors
+    char const *
+    minissd_get_argument_name(Argument const *prop);
+
+    char const *
+    minissd_get_argument_type(Argument const *prop);
+
+    Attribute const *
+    minissd_get_argument_attributes(Argument const *prop);
+
+    Argument const *
+    minissd_get_next_argument(Argument const *arg);
+
+    // Attribute Accessors
+    char const *
+    minissd_get_attribute_name(Attribute const *attr);
+
+    AttributeParameter const *
+    minissd_get_attribute_parameters(Attribute const *attr);
 
     Attribute const *
     minissd_get_next_attribute(Attribute const *attr);
 
-    AttributeParameter const *
-    minissd_get_next_attribute_parameter(AttributeParameter const *arg);
-
+    // Attribute Parameter Accessors
     char const *
     minissd_get_attribute_parameter_name(AttributeParameter const *arg);
 
     char const *
     minissd_get_attribute_parameter_value(AttributeParameter const *arg);
 
-    Argument const *
-    minissd_get_next_argument(Argument const *arg);
+    AttributeParameter const *
+    minissd_get_next_attribute_parameter(AttributeParameter const *arg);
 
 #ifdef __cplusplus
 }

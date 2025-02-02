@@ -790,7 +790,7 @@ TEST_F(ParserTest, ValidInput_Enum)
     EnumVariant const *variant = minissd_get_enum_variants(ast);
     ASSERT_NE(variant, nullptr);
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
-    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 0);
+    ASSERT_EQ(minissd_get_enum_variant_value(variant, nullptr), 0);
 
     variant = minissd_get_next_enum_variant(variant);
     ASSERT_EQ(variant, nullptr);
@@ -812,7 +812,7 @@ TEST_F(ParserTest, ValidInput_EnumNoTrailingComma)
     EnumVariant const *variant = minissd_get_enum_variants(ast);
     ASSERT_NE(variant, nullptr);
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
-    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 0);
+    ASSERT_EQ(minissd_get_enum_variant_value(variant, nullptr), 0);
 
     variant = minissd_get_next_enum_variant(variant);
     ASSERT_EQ(variant, nullptr);
@@ -834,7 +834,7 @@ TEST_F(ParserTest, ValidInput_EnumWithValue)
     EnumVariant const *variant = minissd_get_enum_variants(ast);
     ASSERT_NE(variant, nullptr);
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
-    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 1);
+    ASSERT_EQ(minissd_get_enum_variant_value(variant, nullptr), 1);
 
     variant = minissd_get_next_enum_variant(variant);
     ASSERT_EQ(variant, nullptr);
@@ -856,7 +856,7 @@ TEST_F(ParserTest, ValidInput_EnumWithValueNoTrailingComma)
     EnumVariant const *variant = minissd_get_enum_variants(ast);
     ASSERT_NE(variant, nullptr);
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
-    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 1);
+    ASSERT_EQ(minissd_get_enum_variant_value(variant, nullptr), 1);
 
     variant = minissd_get_next_enum_variant(variant);
     ASSERT_EQ(variant, nullptr);
@@ -878,12 +878,12 @@ TEST_F(ParserTest, ValidInput_EnumWithValues)
     EnumVariant const *variant = minissd_get_enum_variants(ast);
     ASSERT_NE(variant, nullptr);
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
-    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 1);
+    ASSERT_EQ(minissd_get_enum_variant_value(variant, nullptr), 1);
 
     variant = minissd_get_next_enum_variant(variant);
     ASSERT_NE(variant, nullptr);
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Green");
-    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 2);
+    ASSERT_EQ(minissd_get_enum_variant_value(variant, nullptr), 2);
 
     variant = minissd_get_next_enum_variant(variant);
     ASSERT_EQ(variant, nullptr);
@@ -905,12 +905,12 @@ TEST_F(ParserTest, ValidInput_EnumWithValuesNoTrailingComma)
     EnumVariant const *variant = minissd_get_enum_variants(ast);
     ASSERT_NE(variant, nullptr);
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
-    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 1);
+    ASSERT_EQ(minissd_get_enum_variant_value(variant, nullptr), 1);
 
     variant = minissd_get_next_enum_variant(variant);
     ASSERT_NE(variant, nullptr);
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Green");
-    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 2);
+    ASSERT_EQ(minissd_get_enum_variant_value(variant, nullptr), 2);
 
     variant = minissd_get_next_enum_variant(variant);
     ASSERT_EQ(variant, nullptr);
@@ -932,7 +932,7 @@ TEST_F(ParserTest, ValidInput_EnumWithSpaceAfter)
     EnumVariant const *variant = minissd_get_enum_variants(ast);
     ASSERT_NE(variant, nullptr);
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
-    ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 0);
+    ASSERT_EQ(minissd_get_enum_variant_value(variant, nullptr), 0);
 
     variant = minissd_get_next_enum_variant(variant);
     ASSERT_EQ(variant, nullptr);

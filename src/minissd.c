@@ -1348,7 +1348,7 @@ minissd_get_enum_variant_attributes(EnumVariant const *value)
     return value ? value->attributes : NULL;
 }
 
-int minissd_get_enum_variant(EnumVariant const *value, bool *has_value)
+int minissd_get_enum_variant_value(EnumVariant const *value, bool *has_value)
 {
     if (!value || !value->opt_value)
     {
