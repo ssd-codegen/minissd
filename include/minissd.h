@@ -2,6 +2,7 @@
 #define MINISSD_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifndef MAX_ERROR_SIZE
 #define MAX_ERROR_SIZE 512
