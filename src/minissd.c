@@ -253,7 +253,7 @@ void debug(const Parser *p)
 {
     printf("Current: %c\n", p->current);
     printf("Next: %c\n", peek(p));
-    printf("Index: %d\n", p->index);
+    printf("Index: %ld\n", p->index);
     printf("Line: %d\n", p->line);
     printf("Column: %d\n", p->column);
 }
