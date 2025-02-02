@@ -221,6 +221,7 @@ free_ast(AstNode *ast)
             }
             free_dependencies(current->node.service_node.opt_ll_dependencies);
             free_handlers(current->node.service_node.opt_ll_handlers);
+            free_events(current->node.service_node.opt_ll_events);
             break;
         default:
             break;
