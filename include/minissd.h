@@ -15,17 +15,17 @@
 extern "C"
 {
 #endif
-    typedef struct Argument
+    typedef struct AttributeArgument
     {
         char *key;
-        char *value; // Nullable
-        struct Argument *next;
-    } Argument;
+        char *opt_value; // Nullable
+        struct AttributeArgument *next;
+    } AttributeArgument;
 
     typedef struct Attribute
     {
         char *name;
-        Argument *ll_arguments;
+        AttributeArgument *opt_ll_arguments;
         struct Attribute *next;
     } Attribute;
 
@@ -41,9 +41,33 @@ extern "C"
     {
         Attribute *attributes;
         char *name;
-        int *value; // Nullable
+        int *opt_value; // Nullable
         struct EnumVariant *next;
     } EnumVariant;
+
+    typedef struct HandlerArgument
+    {
+        Attribute *attributes;
+        char *name;
+        char *type;
+        struct HandlerArgument *next;
+    } HandlerArgument;
+
+    typedef struct Handler
+    {
+        Attribute *opt_ll_attributes;
+        char *name;
+        HandlerArgument *opt_ll_arguments;
+        char *opt_return_type;
+        struct Handler *next;
+    } Handler;
+
+    typedef struct Dependency
+    {
+        Attribute *opt_ll_attributes;
+        char *path;
+        struct Dependency *next;
+    } Dependency;
 
     typedef struct Import
     {
@@ -62,22 +86,31 @@ extern "C"
         EnumVariant *ll_variants;
     } Enum;
 
+    typedef struct Service
+    {
+        char *name;
+        Dependency *opt_ll_dependencies;
+        Handler *ll_handlers;
+    } Service;
+
     typedef enum
     {
         NODE_IMPORT,
         NODE_DATA,
-        NODE_ENUM
+        NODE_ENUM,
+        NODE_SERVICE
     } NodeType;
 
     typedef struct AstNode
     {
         NodeType type;
-        Attribute *ll_attributes;
+        Attribute *opt_ll_attributes;
         union
         {
-            Import importNode;
-            Data dataNode;
-            Enum enumNode;
+            Import import_node;
+            Data data_node;
+            Enum enum_node;
+            Service service_node;
         } node;
         struct AstNode *next;
     } AstNode;
@@ -85,6 +118,7 @@ extern "C"
     typedef struct
     {
         const char *input;
+        int input_length;
         char error[MAX_ERROR_SIZE];
         char current;
         int index;
@@ -105,11 +139,12 @@ extern "C"
     const char *minissd_get_import_path(const AstNode *node);
     const char *minissd_get_data_name(const AstNode *node);
     const char *minissd_get_enum_name(const AstNode *node);
+    const char *minissd_get_handler_name(const AstNode *node);
 
     // Attribute accessors
     Attribute *minissd_get_attributes(const AstNode *node);
     const char *minissd_get_attribute_name(const Attribute *attr);
-    Argument *minissd_get_attribute_arguments(const Attribute *attr);
+    AttributeArgument *minissd_get_attribute_arguments(const Attribute *attr);
 
     // Property and EnumVariant accessors
     Property *minissd_get_properties(const AstNode *node);
@@ -122,12 +157,26 @@ extern "C"
     Attribute *minissd_get_enum_variant_attributes(const EnumVariant *value);
     int minissd_get_enum_variant(const EnumVariant *value, bool *has_value);
 
+    const char *minissd_get_service_name(const AstNode *node);
+    HandlerArgument *minissd_get_handler_arguments(const Handler *node);
+    const char *minissd_get_argument_name(const HandlerArgument *prop);
+    Attribute *minissd_get_argument_attributes(const HandlerArgument *prop);
+    const char *minissd_get_argument_type(const HandlerArgument *prop);
+
+    Dependency *minissd_get_dependencies(const AstNode *node);
+    Handler *minissd_get_handlers(const AstNode *node);
+
+    Dependency *minissd_get_next_dependency(const Dependency *dep);
+    Handler *minissd_get_next_handler(const Handler *handler);
+    const char *minissd_get_dependency_path(const Dependency *dep);
+
     // Traversal functions
     AstNode *minissd_get_next_node(const AstNode *node);
     Property *minissd_get_next_property(const Property *prop);
     EnumVariant *minissd_get_next_enum_value(const EnumVariant *value);
     Attribute *minissd_get_next_attribute(const Attribute *attr);
-    Argument *minissd_get_next_argument(const Argument *arg);
+    AttributeArgument *minissd_get_next_attribute_argument(const AttributeArgument *arg);
+    HandlerArgument *minissd_get_next_handler_argument(const HandlerArgument *arg);
 
 #ifdef __cplusplus
 }

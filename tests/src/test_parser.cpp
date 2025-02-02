@@ -184,10 +184,10 @@ TEST_F(ParserTest, ValidInput_WithAttributes)
     ASSERT_NE(attr, nullptr); // Ensure there are attributes
     ASSERT_STREQ(minissd_get_attribute_name(attr), "attr1");
 
-    Argument *arg = minissd_get_attribute_arguments(attr);
+    AttributeArgument *arg = minissd_get_attribute_arguments(attr);
     ASSERT_NE(arg, nullptr); // Ensure there are arguments
     ASSERT_STREQ(arg->key, "name");
-    ASSERT_STREQ(arg->value, "value1");
+    ASSERT_STREQ(arg->opt_value, "value1");
 }
 
 // Test for multiple attributes in the same node
@@ -215,10 +215,10 @@ TEST_F(ParserTest, ValidInput_MultipleAttributes)
     ASSERT_NE(attr, nullptr); // Ensure there is another attribute
     ASSERT_STREQ(minissd_get_attribute_name(attr), "attr2");
 
-    Argument *arg = minissd_get_attribute_arguments(attr);
+    AttributeArgument *arg = minissd_get_attribute_arguments(attr);
     ASSERT_NE(arg, nullptr); // Ensure there are arguments
     ASSERT_STREQ(arg->key, "name");
-    ASSERT_STREQ(arg->value, "value1");
+    ASSERT_STREQ(arg->opt_value, "value1");
 }
 
 TEST_F(ParserTest, ValidInput_MultipleAttributes2)
@@ -245,8 +245,8 @@ TEST_F(ParserTest, ValidInput_MultipleAttributes2)
     ASSERT_NE(attr, nullptr); // Ensure there is another attribute
     ASSERT_STREQ(minissd_get_attribute_name(attr), "attr2");
 
-    Argument *arg = minissd_get_attribute_arguments(attr);
+    AttributeArgument *arg = minissd_get_attribute_arguments(attr);
     ASSERT_NE(arg, nullptr); // Ensure there are arguments
     ASSERT_STREQ(arg->key, "name");
-    ASSERT_STREQ(arg->value, "value1");
+    ASSERT_STREQ(arg->opt_value, "value1");
 }
