@@ -7,11 +7,20 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#define CHECKED_DECLARE(type, obj, func) \
+    type obj = func(p);                  \
+    if (!obj)                            \
+    {                                    \
+        return NULL;                     \
+    }
+
 static char *
 strdup_c99(const char *s)
 {
     if (s == NULL)
+    {
         return NULL;
+    }
 
     size_t len = strlen(s) + 1;
     char *dup = (char *)malloc(len);
@@ -24,29 +33,22 @@ strdup_c99(const char *s)
     return dup;
 }
 
-#define CHECKED_DECLARE(type, obj, func) \
-    type obj = func(p);                  \
-    if (!obj)                            \
-    {                                    \
-        return NULL;                     \
-    }
-
 // Free functions
 static void
-free_arguments(Argument *args)
+free_attribute_arguments(AttributeArgument *args)
 {
-    Argument *current = args;
+    AttributeArgument *current = args;
     while (current)
     {
         if (current->key)
         {
             free(current->key);
         }
-        if (current->value)
+        if (current->opt_value)
         {
-            free(current->value);
+            free(current->opt_value);
         }
-        Argument *next = current->next;
+        AttributeArgument *next = current->next;
         free(current);
         current = next;
     };
@@ -62,10 +64,31 @@ free_attributes(Attribute *attrs)
         {
             free(current_attr->name);
         }
-        free_arguments(current_attr->ll_arguments);
+        free_attribute_arguments(current_attr->opt_ll_arguments);
         Attribute *next_attr = current_attr->next;
         free(current_attr);
         current_attr = next_attr;
+    };
+}
+
+static void
+free_handler_arguments(HandlerArgument *args)
+{
+    HandlerArgument *current = args;
+    while (current)
+    {
+        if (current->name)
+        {
+            free(current->name);
+        }
+        if (current->type)
+        {
+            free(current->type);
+        }
+        free_attributes(current->attributes);
+        HandlerArgument *next = current->next;
+        free(current);
+        current = next;
     };
 }
 
@@ -100,12 +123,50 @@ free_enum_variants(EnumVariant *variants)
         {
             free(current->name);
         }
-        if (current->value)
+        if (current->opt_value)
         {
-            free(current->value);
+            free(current->opt_value);
         }
         free_attributes(current->attributes);
         EnumVariant *next = current->next;
+        free(current);
+        current = next;
+    };
+}
+
+static void
+free_dependencies(Dependency *deps)
+{
+    Dependency *current = deps;
+    while (current)
+    {
+        if (current->path)
+        {
+            free(current->path);
+        }
+        free_attributes(current->opt_ll_attributes);
+        Dependency *next = current->next;
+        free(current);
+        current = next;
+    };
+}
+static void
+free_handlers(Handler *handlers)
+{
+    Handler *current = handlers;
+    while (current)
+    {
+        if (current->name)
+        {
+            free(current->name);
+        }
+        if (current->opt_return_type)
+        {
+            free(current->opt_return_type);
+        }
+        free_attributes(current->opt_ll_attributes);
+        free_handler_arguments(current->opt_ll_arguments);
+        Handler *next = current->next;
         free(current);
         current = next;
     };
@@ -117,28 +178,36 @@ free_ast(AstNode *ast)
     AstNode *current = ast;
     while (current)
     {
-        free_attributes(current->ll_attributes);
+        free_attributes(current->opt_ll_attributes);
         switch (current->type)
         {
         case NODE_IMPORT:
-            if (current->node.importNode.path)
+            if (current->node.import_node.path)
             {
-                free(current->node.importNode.path);
+                free(current->node.import_node.path);
             }
             break;
         case NODE_DATA:
-            if (current->node.dataNode.name)
+            if (current->node.data_node.name)
             {
-                free(current->node.dataNode.name);
+                free(current->node.data_node.name);
             }
-            free_properties(current->node.dataNode.ll_properties);
+            free_properties(current->node.data_node.ll_properties);
             break;
         case NODE_ENUM:
-            if (current->node.enumNode.name)
+            if (current->node.enum_node.name)
             {
-                free(current->node.enumNode.name);
+                free(current->node.enum_node.name);
             }
-            free_enum_variants(current->node.enumNode.ll_variants);
+            free_enum_variants(current->node.enum_node.ll_variants);
+            break;
+        case NODE_SERVICE:
+            if (current->node.service_node.name)
+            {
+                free(current->node.service_node.name);
+            }
+            free_dependencies(current->node.service_node.opt_ll_dependencies);
+            free_handlers(current->node.service_node.ll_handlers);
             break;
         default:
             break;
@@ -154,6 +223,25 @@ static void
 error(Parser *p, const char *message)
 {
     snprintf(p->error, MAX_ERROR_SIZE, "Error: %s at line %d, column %d", message, p->line, p->column);
+}
+
+static char
+peek(const Parser *p)
+{
+    if (p->index < p->input_length)
+    {
+        return p->input[p->index];
+    }
+    return '\0';
+}
+
+void debug(const Parser *p)
+{
+    printf("Current: %c\n", p->current);
+    printf("Next: %c\n", peek(p));
+    printf("Index: %d\n", p->index);
+    printf("Line: %d\n", p->line);
+    printf("Column: %d\n", p->column);
 }
 
 static void
@@ -177,11 +265,24 @@ advance(Parser *p)
 }
 
 static void
-eat_whitespace(Parser *p)
+eat_whitespaces_and_comments(Parser *p)
 {
-    while (isspace(p->current))
+    bool comment = true;
+    while (comment)
     {
-        advance(p);
+        comment = false;
+        while (isspace(p->current))
+        {
+            advance(p);
+        }
+        if (p->current == '/' && peek(p) == '/')
+        {
+            comment = true;
+            while (p->current != '\n' && p->current != '\0')
+            {
+                advance(p);
+            }
+        }
     }
 }
 
@@ -196,7 +297,7 @@ parse_path(Parser *p)
 {
     char buffer[MAX_TOKEN_SIZE + 1];
     int length = 0;
-    eat_whitespace(p);
+    eat_whitespaces_and_comments(p);
     while (length <= MAX_TOKEN_SIZE && p->current != '\0' && (is_alphanumeric(p->current) || p->current == ':'))
     {
         if (length == MAX_TOKEN_SIZE)
@@ -303,11 +404,11 @@ static Attribute *
 parse_attributes(Parser *p)
 {
     Attribute *head = NULL, *tail = NULL;
-    eat_whitespace(p);
+    eat_whitespaces_and_comments(p);
     while (p->current == '#')
     {
         advance(p);
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         if (p->current != '[')
         {
             free_attributes(head);
@@ -315,13 +416,13 @@ parse_attributes(Parser *p)
             return NULL;
         }
         advance(p);
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         while (p->current != ']')
         {
             Attribute *attr = (Attribute *)calloc(1, sizeof(Attribute));
             assert(attr);
 
-            eat_whitespace(p);
+            eat_whitespaces_and_comments(p);
             attr->name = parse_identifier(p);
             if (!attr->name)
             {
@@ -330,39 +431,39 @@ parse_attributes(Parser *p)
                 return NULL;
             };
 
-            eat_whitespace(p);
+            eat_whitespaces_and_comments(p);
             if (p->current == '(')
             {
                 advance(p);
-                Argument *arg_head = NULL, *arg_tail = NULL;
+                AttributeArgument *arg_head = NULL, *arg_tail = NULL;
 
-                eat_whitespace(p);
+                eat_whitespaces_and_comments(p);
                 while (p->current != ')')
                 {
-                    Argument *arg = (Argument *)calloc(1, sizeof(Argument));
+                    AttributeArgument *arg = (AttributeArgument *)calloc(1, sizeof(AttributeArgument));
                     assert(arg);
 
-                    eat_whitespace(p);
+                    eat_whitespaces_and_comments(p);
                     arg->key = parse_identifier(p);
                     if (!arg->key)
                     {
-                        free_arguments(arg);
-                        free_arguments(arg_head);
+                        free_attribute_arguments(arg);
+                        free_attribute_arguments(arg_head);
                         free_attributes(attr);
                         free_attributes(head);
                         return NULL;
                     };
 
-                    eat_whitespace(p);
+                    eat_whitespaces_and_comments(p);
                     if (p->current == '=')
                     {
                         advance(p);
-                        eat_whitespace(p);
-                        arg->value = parse_string(p);
-                        if (!arg->value)
+                        eat_whitespaces_and_comments(p);
+                        arg->opt_value = parse_string(p);
+                        if (!arg->opt_value)
                         {
-                            free_arguments(arg);
-                            free_arguments(arg_head);
+                            free_attribute_arguments(arg);
+                            free_attribute_arguments(arg_head);
                             free_attributes(attr);
                             free_attributes(head);
                             return NULL;
@@ -379,7 +480,7 @@ parse_attributes(Parser *p)
                     }
                     arg_tail = arg;
 
-                    eat_whitespace(p);
+                    eat_whitespaces_and_comments(p);
                     if (p->current != ',')
                     {
                         break;
@@ -387,18 +488,18 @@ parse_attributes(Parser *p)
                     advance(p);
                 }
 
-                eat_whitespace(p);
+                eat_whitespaces_and_comments(p);
                 if (p->current != ')')
                 {
                     error(p, "Expected ')' after attribute argument");
-                    free_arguments(arg_head);
+                    free_attribute_arguments(arg_head);
                     free_attributes(attr);
                     free_attributes(head);
 
                     return NULL;
                 }
                 advance(p);
-                attr->ll_arguments = arg_head;
+                attr->opt_ll_arguments = arg_head;
             }
 
             if (!head)
@@ -411,7 +512,7 @@ parse_attributes(Parser *p)
             }
             tail = attr;
 
-            eat_whitespace(p);
+            eat_whitespaces_and_comments(p);
             if (p->current != ',')
             {
                 break;
@@ -419,7 +520,7 @@ parse_attributes(Parser *p)
             advance(p);
         }
 
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         if (p->current != ']')
         {
             free_attributes(head);
@@ -427,7 +528,7 @@ parse_attributes(Parser *p)
             return NULL;
         }
         advance(p);
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
     }
     return head;
 }
@@ -444,17 +545,17 @@ parse_enum_variants(Parser *p)
 
     EnumVariant *head = NULL, *tail = NULL;
 
-    eat_whitespace(p);
+    eat_whitespaces_and_comments(p);
     while (p->current != '}')
     {
 
         EnumVariant *ev = (EnumVariant *)calloc(1, sizeof(EnumVariant));
         assert(ev);
 
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         ev->attributes = parse_attributes(p);
 
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         ev->name = parse_identifier(p);
         if (!ev->name)
         {
@@ -463,14 +564,14 @@ parse_enum_variants(Parser *p)
             return NULL;
         };
 
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         if (p->current == '=')
         {
             advance(p);
 
-            eat_whitespace(p);
-            ev->value = parse_int(p);
-            if (!ev->value)
+            eat_whitespaces_and_comments(p);
+            ev->opt_value = parse_int(p);
+            if (!ev->opt_value)
             {
                 free_enum_variants(ev);
                 free_enum_variants(head);
@@ -488,16 +589,16 @@ parse_enum_variants(Parser *p)
         }
         tail = ev;
 
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         if (p->current != ',')
         {
             break;
         }
         advance(p);
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
     }
 
-    eat_whitespace(p);
+    eat_whitespaces_and_comments(p);
     if (p->current != '}')
     {
         error(p, "Expected ',' after enum value");
@@ -525,17 +626,17 @@ parse_properties(Parser *p)
 
     Property *head = NULL, *tail = NULL;
 
-    eat_whitespace(p);
+    eat_whitespaces_and_comments(p);
     while (p->current != '}')
     {
 
         Property *prop = (Property *)calloc(1, sizeof(Property));
         assert(prop);
 
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         prop->attributes = parse_attributes(p);
 
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         prop->name = parse_identifier(p);
         if (!prop->name)
         {
@@ -544,7 +645,7 @@ parse_properties(Parser *p)
             return NULL;
         };
 
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         if (p->current != ':')
         {
             error(p, "Expected ':' after property name");
@@ -554,7 +655,7 @@ parse_properties(Parser *p)
         }
         advance(p);
 
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         prop->type = parse_identifier(p);
         if (!prop->type)
         {
@@ -573,16 +674,16 @@ parse_properties(Parser *p)
         }
         tail = prop;
 
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         if (p->current != ',')
         {
             break;
         }
         advance(p);
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
     }
 
-    eat_whitespace(p);
+    eat_whitespaces_and_comments(p);
     if (p->current != '}')
     {
         error(p, "Expected ',' after property");
@@ -593,13 +694,249 @@ parse_properties(Parser *p)
     return head;
 }
 
+static HandlerArgument *
+parse_handler_arguments(Parser *p)
+{
+    HandlerArgument *head = NULL, *tail = NULL;
+    while (p->current != ')')
+    {
+        HandlerArgument *arg = (HandlerArgument *)calloc(1, sizeof(HandlerArgument));
+        assert(arg);
+        eat_whitespaces_and_comments(p);
+        arg->name = parse_identifier(p);
+        eat_whitespaces_and_comments(p);
+        if (!arg->name)
+        {
+            error(p, "Expected argument name");
+            free_handler_arguments(arg);
+            free_handler_arguments(head);
+            return NULL;
+        };
+        if (p->current != ':')
+        {
+            error(p, "Expected ':' after argument name");
+            free_handler_arguments(arg);
+            free_handler_arguments(head);
+            return NULL;
+        }
+        advance(p);
+        eat_whitespaces_and_comments(p);
+        arg->type = parse_identifier(p);
+        eat_whitespaces_and_comments(p);
+        if (!arg->type)
+        {
+            error(p, "Expected argument type");
+            free_handler_arguments(arg);
+            free_handler_arguments(head);
+            return NULL;
+        };
+
+        if (!head)
+        {
+            head = arg;
+        }
+        else
+        {
+            tail->next = arg;
+        }
+
+        if (p->current != ',')
+        {
+            break;
+        }
+        advance(p);
+        eat_whitespaces_and_comments(p);
+    }
+    return head;
+}
+
+typedef struct ServiceComponents
+{
+    Handler *ll_handlers;
+    Dependency *opt_ll_dependencies;
+} ServiceComponents;
+
+static void
+free_service_components(ServiceComponents *sc)
+{
+    free_handlers(sc->ll_handlers);
+    free_dependencies(sc->opt_ll_dependencies);
+    free(sc);
+}
+
+static ServiceComponents *
+parse_service(Parser *p)
+{
+    if (p->current != '{')
+    {
+        error(p, "Expected '{' after service name");
+        return NULL;
+    }
+    advance(p);
+
+    ServiceComponents *sc = (ServiceComponents *)calloc(1, sizeof(ServiceComponents));
+    Handler *handler_head = NULL, *handler_tail = NULL;
+    Dependency *dep_head = NULL, *dep_tail = NULL;
+
+    while (p->current != '}')
+    {
+        eat_whitespaces_and_comments(p);
+        Attribute *attributes = parse_attributes(p);
+        eat_whitespaces_and_comments(p);
+        char *ident = parse_identifier(p);
+        if (!ident)
+        {
+            error(p, "Expected 'depends' or 'handle' keyword");
+            free(ident);
+            free_dependencies(dep_head);
+            free_handlers(handler_head);
+            free_service_components(sc);
+            return NULL;
+        };
+
+        if (strcmp(ident, "depends") == 0)
+        {
+            Dependency *dep = (Dependency *)calloc(1, sizeof(Dependency));
+            assert(dep);
+
+            dep->opt_ll_attributes = attributes;
+            dep->path = parse_path(p);
+            if (!dep->path)
+            {
+                error(p, "Expected dependency path");
+                free(ident);
+                free_dependencies(dep);
+                free_dependencies(dep_head);
+                free_handlers(handler_head);
+                free_service_components(sc);
+                return NULL;
+            };
+
+            if (!dep_head)
+            {
+                dep_head = dep;
+            }
+            else
+            {
+                dep_tail->next = dep;
+            }
+            dep_tail = dep;
+        }
+        else if (strcmp(ident, "handle") == 0)
+        {
+            Handler *handler = (Handler *)calloc(1, sizeof(Handler));
+            assert(handler);
+
+            handler->opt_ll_attributes = attributes;
+
+            eat_whitespaces_and_comments(p);
+            handler->name = parse_identifier(p);
+
+            if (!handler->name)
+            {
+                error(p, "Expected handler name");
+                free(ident);
+                free_handlers(handler);
+                free_handlers(handler_head);
+                free_dependencies(dep_head);
+                free_service_components(sc);
+                return NULL;
+            };
+
+            eat_whitespaces_and_comments(p);
+            if (p->current != '(')
+            {
+                error(p, "Expected '(' after handler name");
+                free(ident);
+                free_handlers(handler);
+                free_handlers(handler_head);
+                free_dependencies(dep_head);
+                free_service_components(sc);
+                return NULL;
+            }
+            advance(p);
+
+            eat_whitespaces_and_comments(p);
+            handler->opt_ll_arguments = parse_handler_arguments(p);
+            eat_whitespaces_and_comments(p);
+
+            if (p->current != ')')
+            {
+                error(p, "Expected ')' after handler arguments");
+                free(ident);
+                free_handlers(handler);
+                free_handlers(handler_head);
+                free_dependencies(dep_head);
+                free_service_components(sc);
+                return NULL;
+            }
+            advance(p);
+
+            eat_whitespaces_and_comments(p);
+            if (p->current == ':')
+            {
+                advance(p);
+                eat_whitespaces_and_comments(p);
+                handler->opt_return_type = parse_identifier(p);
+                eat_whitespaces_and_comments(p);
+                if (!handler->opt_return_type)
+                {
+                    error(p, "Expected return type after ':'");
+                    free(ident);
+                    free_handlers(handler);
+                    free_handlers(handler_head);
+                    free_dependencies(dep_head);
+                    free_service_components(sc);
+                    return NULL;
+                };
+            }
+
+            if (!handler_head)
+            {
+                handler_head = handler;
+            }
+            else
+            {
+                handler_tail->next = handler;
+            }
+            handler_tail = handler;
+        }
+        else
+        {
+            error(p, "Expected 'depends' or 'handle' keyword");
+            free(ident);
+            free_dependencies(dep_head);
+            free_handlers(handler_head);
+            free_service_components(sc);
+            return NULL;
+        }
+
+        if (p->current != ';')
+        {
+            error(p, "Expected ';' after service component");
+            free(ident);
+            free_dependencies(dep_head);
+            free_handlers(handler_head);
+            free_service_components(sc);
+            return NULL;
+        }
+        advance(p);
+
+        eat_whitespaces_and_comments(p);
+    }
+    advance(p);
+    sc->ll_handlers = handler_head;
+    sc->opt_ll_dependencies = dep_head;
+    return sc;
+}
+
 static AstNode *
 parse_node(Parser *p)
 {
-    eat_whitespace(p);
+    eat_whitespaces_and_comments(p);
     Attribute *attributes = parse_attributes(p);
 
-    eat_whitespace(p);
+    eat_whitespaces_and_comments(p);
     char *ident = parse_identifier(p);
     if (!ident)
     {
@@ -609,14 +946,15 @@ parse_node(Parser *p)
     AstNode *node = (AstNode *)calloc(1, sizeof(AstNode));
     assert(node);
 
-    eat_whitespace(p);
-    node->ll_attributes = attributes;
+    eat_whitespaces_and_comments(p);
+    node->opt_ll_attributes = attributes;
     if (strcmp(ident, "import") == 0)
     {
         node->type = NODE_IMPORT;
-        node->node.importNode.path = parse_path(p);
-        if (!node->node.importNode.path)
+        node->node.import_node.path = parse_path(p);
+        if (!node->node.import_node.path)
         {
+            error(p, "Expected import path");
             free(ident);
             free_ast(node);
             return NULL;
@@ -625,16 +963,17 @@ parse_node(Parser *p)
     else if (strcmp(ident, "data") == 0)
     {
         node->type = NODE_DATA;
-        node->node.dataNode.name = parse_identifier(p);
-        if (!node->node.dataNode.name)
+        node->node.data_node.name = parse_identifier(p);
+        if (!node->node.data_node.name)
         {
+            error(p, "Expected data name");
             free(ident);
             free_ast(node);
             return NULL;
         };
-        eat_whitespace(p);
-        node->node.dataNode.ll_properties = parse_properties(p);
-        if (!node->node.dataNode.ll_properties)
+        eat_whitespaces_and_comments(p);
+        node->node.data_node.ll_properties = parse_properties(p);
+        if (!node->node.data_node.ll_properties)
         {
             free(ident);
             free_ast(node);
@@ -644,21 +983,53 @@ parse_node(Parser *p)
     else if (strcmp(ident, "enum") == 0)
     {
         node->type = NODE_ENUM;
-        node->node.enumNode.name = parse_identifier(p);
-        if (!node->node.enumNode.name)
+        node->node.enum_node.name = parse_identifier(p);
+        if (!node->node.enum_node.name)
+        {
+            error(p, "Expected enum name");
+            free(ident);
+            free_ast(node);
+            return NULL;
+        };
+        eat_whitespaces_and_comments(p);
+        node->node.enum_node.ll_variants = parse_enum_variants(p);
+        if (!node->node.enum_node.ll_variants)
         {
             free(ident);
             free_ast(node);
             return NULL;
         };
-        eat_whitespace(p);
-        node->node.enumNode.ll_variants = parse_enum_variants(p);
-        if (!node->node.enumNode.ll_variants)
+    }
+    else if (strcmp(ident, "service") == 0)
+    {
+        node->type = NODE_SERVICE;
+        node->node.service_node.name = parse_identifier(p);
+        if (!node->node.service_node.name)
+        {
+            error(p, "Expected service name");
+            free(ident);
+            free_ast(node);
+            return NULL;
+        };
+        eat_whitespaces_and_comments(p);
+        ServiceComponents *sc = parse_service(p);
+        if (!sc)
         {
             free(ident);
             free_ast(node);
             return NULL;
         };
+        if (!sc->ll_handlers)
+        {
+            error(p, "Service must have at least one handler");
+            free_service_components(sc);
+            free(ident);
+            free_ast(node);
+            return NULL;
+        }
+        node->node.service_node.ll_handlers = sc->ll_handlers;
+        node->node.service_node.opt_ll_dependencies = sc->opt_ll_dependencies;
+        free(sc);
     }
     else
     {
@@ -669,7 +1040,7 @@ parse_node(Parser *p)
     free(ident);
     if (node)
     {
-        eat_whitespace(p);
+        eat_whitespaces_and_comments(p);
         if (p->current != ';')
         {
             switch (node->type)
@@ -682,6 +1053,9 @@ parse_node(Parser *p)
                 break;
             case NODE_ENUM:
                 error(p, "Expected ';' after enum declaration");
+                break;
+            case NODE_SERVICE:
+                error(p, "Expected ';' after service declaration");
                 break;
             }
             free_ast(node);
@@ -734,29 +1108,9 @@ create_parser(const char *input)
     return p;
 }
 
-static void
-print_ast(AstNode *ast)
-{
-    while (ast)
-    {
-        switch (ast->type)
-        {
-        case NODE_IMPORT:
-            printf("Import: %s\n", ast->node.importNode.path);
-            break;
-        case NODE_DATA:
-            printf("Data: %s\n", ast->node.dataNode.name);
-            break;
-        case NODE_ENUM:
-            printf("Enum: %s\n", ast->node.enumNode.name);
-            break;
-        }
-        ast = ast->next;
-    }
-}
-
 // Parser functions
-Parser *minissd_create_parser(const char *input)
+Parser *
+minissd_create_parser(const char *input)
 {
     return create_parser(input);
 }
@@ -767,7 +1121,8 @@ void minissd_free_parser(Parser *p)
 }
 
 // Parsing
-AstNode *minissd_parse(Parser *p)
+AstNode *
+minissd_parse(Parser *p)
 {
     return parse(p);
 }
@@ -778,114 +1133,204 @@ void minissd_free_ast(AstNode *ast)
 }
 
 // AST Node accessors
-NodeType minissd_get_node_type(const AstNode *node)
+NodeType
+minissd_get_node_type(const AstNode *node)
 {
     return node ? node->type : -1;
 }
 
-const char *minissd_get_import_path(const AstNode *node)
+const char *
+minissd_get_import_path(const AstNode *node)
 {
-    return (node && node->type == NODE_IMPORT) ? node->node.importNode.path : NULL;
+    return (node && node->type == NODE_IMPORT) ? node->node.import_node.path : NULL;
 }
 
-const char *minissd_get_data_name(const AstNode *node)
+const char *
+minissd_get_data_name(const AstNode *node)
 {
-    return (node && node->type == NODE_DATA) ? node->node.dataNode.name : NULL;
+    return (node && node->type == NODE_DATA) ? node->node.data_node.name : NULL;
 }
 
-const char *minissd_get_enum_name(const AstNode *node)
+const char *
+minissd_get_enum_name(const AstNode *node)
 {
-    return (node && node->type == NODE_ENUM) ? node->node.enumNode.name : NULL;
+    return (node && node->type == NODE_ENUM) ? node->node.enum_node.name : NULL;
+}
+
+const char *
+minissd_get_handler_name(const AstNode *node)
+{
+    return (node && node->type == NODE_SERVICE) ? node->node.service_node.name : NULL;
 }
 
 // Attribute accessors
-Attribute *minissd_get_attributes(const AstNode *node)
+Attribute *
+minissd_get_attributes(const AstNode *node)
 {
-    return node ? node->ll_attributes : NULL;
+    return node ? node->opt_ll_attributes : NULL;
 }
 
-const char *minissd_get_attribute_name(const Attribute *attr)
+const char *
+minissd_get_attribute_name(const Attribute *attr)
 {
     return attr ? attr->name : NULL;
 }
 
-Argument *minissd_get_attribute_arguments(const Attribute *attr)
+AttributeArgument *
+minissd_get_attribute_arguments(const Attribute *attr)
 {
-    return attr ? attr->ll_arguments : NULL;
+    return attr ? attr->opt_ll_arguments : NULL;
 }
 
 // Property accessors
-Property *minissd_get_properties(const AstNode *node)
+Property *
+minissd_get_properties(const AstNode *node)
 {
-    return (node && node->type == NODE_DATA) ? node->node.dataNode.ll_properties : NULL;
+    return (node && node->type == NODE_DATA) ? node->node.data_node.ll_properties : NULL;
 }
 
-const char *minissd_get_property_name(const Property *prop)
+const char *
+minissd_get_property_name(const Property *prop)
 {
     return prop ? prop->name : NULL;
 }
 
-Attribute *minissd_get_property_attributes(const Property *prop)
+Attribute *
+minissd_get_property_attributes(const Property *prop)
 {
     return prop ? prop->attributes : NULL;
 }
 
-const char *minissd_get_property_type(const Property *prop)
+const char *
+minissd_get_property_type(const Property *prop)
 {
     return prop ? prop->type : NULL;
 }
 
-// Enum Value accessors
-EnumVariant *minissd_get_enum_variants(const AstNode *node)
+Dependency *
+minissd_get_dependencies(const AstNode *node)
 {
-    return (node && node->type == NODE_ENUM) ? node->node.enumNode.ll_variants : NULL;
+    return (node && node->type == NODE_SERVICE) ? node->node.service_node.opt_ll_dependencies : NULL;
 }
 
-const char *minissd_get_enum_variant_name(const EnumVariant *value)
+Handler *
+minissd_get_handlers(const AstNode *node)
+{
+    return (node && node->type == NODE_SERVICE) ? node->node.service_node.ll_handlers : NULL;
+}
+
+// Enum Value accessors
+EnumVariant *
+minissd_get_enum_variants(const AstNode *node)
+{
+    return (node && node->type == NODE_ENUM) ? node->node.enum_node.ll_variants : NULL;
+}
+
+const char *
+minissd_get_enum_variant_name(const EnumVariant *value)
 {
     return value ? value->name : NULL;
 }
 
-Attribute *minissd_get_enum_variant_attributes(const EnumVariant *value)
+Attribute *
+minissd_get_enum_variant_attributes(const EnumVariant *value)
 {
     return value ? value->attributes : NULL;
 }
 
 int minissd_get_enum_variant(const EnumVariant *value, bool *has_value)
 {
-    if (!value || !value->value)
+    if (!value || !value->opt_value)
     {
         if (has_value)
+        {
             *has_value = false;
+        }
         return 0;
     }
     if (has_value)
+    {
         *has_value = true;
-    return *(value->value);
+    }
+    return *(value->opt_value);
+}
+
+HandlerArgument *
+minissd_get_handler_arguments(const Handler *handler)
+{
+    return (handler) ? handler->opt_ll_arguments : NULL;
+}
+const char *
+minissd_get_argument_name(const HandlerArgument *arg)
+{
+    return arg ? arg->name : NULL;
+}
+Attribute *
+minissd_get_argument_attributes(const HandlerArgument *arg)
+{
+    return arg ? arg->attributes : NULL;
+}
+const char *
+minissd_get_argument_type(const HandlerArgument *arg)
+{
+    return arg ? arg->type : NULL;
 }
 
 // Traversal functions
-AstNode *minissd_get_next_node(const AstNode *node)
+AstNode *
+minissd_get_next_node(const AstNode *node)
 {
     return node ? node->next : NULL;
 }
 
-Property *minissd_get_next_property(const Property *prop)
+Property *
+minissd_get_next_property(const Property *prop)
 {
     return prop ? prop->next : NULL;
 }
 
-EnumVariant *minissd_get_next_enum_value(const EnumVariant *value)
+EnumVariant *
+minissd_get_next_enum_value(const EnumVariant *value)
 {
     return value ? value->next : NULL;
 }
 
-Attribute *minissd_get_next_attribute(const Attribute *attr)
+Attribute *
+minissd_get_next_attribute(const Attribute *attr)
 {
     return attr ? attr->next : NULL;
 }
 
-Argument *minissd_get_next_argument(const Argument *arg)
+AttributeArgument *
+minissd_get_next_attribute_argument(const AttributeArgument *arg)
 {
     return arg ? arg->next : NULL;
+}
+
+Dependency *
+minissd_get_next_dependency(const Dependency *dep)
+{
+    return dep ? dep->next : NULL;
+}
+
+Handler *
+minissd_get_next_handler(const Handler *handler)
+{
+    return handler ? handler->next : NULL;
+}
+
+HandlerArgument *
+minissd_get_next_handler_argument(const HandlerArgument *arg)
+{
+    return arg ? arg->next : NULL;
+}
+
+const char *minissd_get_dependency_path(const Dependency *dep)
+{
+    return dep ? dep->path : NULL;
+}
+
+const char *minissd_get_service_name(const AstNode *node)
+{
+    return (node && node->type == NODE_SERVICE) ? node->node.service_node.name : NULL;
 }

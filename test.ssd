@@ -26,3 +26,11 @@ data MyData {
 	# [ column ( name = "field2" , type="int" )]
 	field2: int,
 };
+
+#[a(b="c")]
+service MyService {
+	#[d(e="f")]
+	depends a::b::c;
+	#[g(h="i")]
+	handle asdf(blah: int);
+};

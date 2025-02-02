@@ -11,12 +11,12 @@ void print_attributes(Attribute *attr)
     {
         printf("  Attribute: %s\n", minissd_get_attribute_name(attr));
 
-        for (Argument *arg = minissd_get_attribute_arguments(attr); arg; arg = minissd_get_next_argument(arg))
+        for (AttributeArgument *arg = minissd_get_attribute_arguments(attr); arg; arg = minissd_get_next_attribute_argument(arg))
         {
             printf("    Argument: %s", arg->key);
-            if (arg->value)
+            if (arg->opt_value)
             {
-                printf(" = %s", arg->value);
+                printf(" = %s", arg->opt_value);
             }
             printf("\n");
         }
@@ -100,6 +100,33 @@ int main(int argc, char **argv)
                 }
                 printf("\n");
                 print_attributes(value->attributes);
+            }
+            break;
+
+        case NODE_SERVICE:
+            printf("Service\n");
+            printf("  Name: %s\n", minissd_get_service_name(node));
+            print_attributes(minissd_get_attributes(node));
+
+            for (Dependency *dep = minissd_get_dependencies(node); dep; dep = minissd_get_next_dependency(dep))
+            {
+                printf("  Depends: %s\n", minissd_get_dependency_path(dep));
+                print_attributes(dep->opt_ll_attributes);
+            }
+
+            for (Handler *handler = minissd_get_handlers(node); handler; handler = minissd_get_next_handler(handler))
+            {
+                printf("  Handler: %s\n", handler->name);
+                print_attributes(handler->opt_ll_attributes);
+                if (handler->opt_return_type)
+                {
+                    printf("    Return Type: %s\n", handler->opt_return_type);
+                }
+                for (HandlerArgument *arg = minissd_get_handler_arguments(handler); arg; arg = minissd_get_next_handler_argument(arg))
+                {
+                    printf("    Argument: %s : %s\n", minissd_get_argument_name(arg), minissd_get_argument_type(arg));
+                    print_attributes(minissd_get_argument_attributes(arg));
+                }
             }
             break;
 
