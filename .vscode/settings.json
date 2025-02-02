@@ -24,9 +24,5 @@
     "clang-tidy.compilerArgs": [
         "-Iinclude",
         "-std=gnu99"
-    ],
-    "editor.formatOnType": true,
-    "[commonlisp]": {
-        "editor.wordSeparators": "`|;:'\",()"
-    }
+    ]
 }

@@ -28,9 +28,14 @@ data MyData {
 };
 
 #[a(b="c")]
+
 service MyService {
+
 	#[d(e="f")]
-	depends a::b::c;
+	depends a::b::c ;
 	#[g(h="i")]
-	handle asdf(blah: int);
+	fn asdf ( blah : int )   ->   out   ;
+
+	#[asdlkj(oieruw="doisf")]
+	event blah ( a : string ) ;
 };

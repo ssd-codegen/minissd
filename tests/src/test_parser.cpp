@@ -23,12 +23,14 @@ TEST_F(ParserTest, ValidInput_Data)
     parser = minissd_create_parser(source_code);
     ast = minissd_parse(parser);
 
-    ASSERT_NE(ast, nullptr);                            // Ensure AST is not NULL
-    ASSERT_EQ(minissd_get_node_type(ast), NODE_DATA);   // Check if node type is 'data'
-    ASSERT_STREQ(minissd_get_data_name(ast), "Person"); // Check data node name
+    ASSERT_NE(ast, nullptr);                                // Ensure AST is not NULL
+    NodeType const *node_type = minissd_get_node_type(ast); // Get node type
+    ASSERT_NE(node_type, nullptr);                          // Ensure node type is not NULL
+    ASSERT_EQ(*node_type, NODE_DATA);                       // Check if node type is 'data'
+    ASSERT_STREQ(minissd_get_data_name(ast), "Person");     // Check data node name
 
     // Check properties
-    Property *prop = minissd_get_properties(ast);
+    Property const *prop = minissd_get_properties(ast);
     ASSERT_NE(prop, nullptr); // Ensure there are properties
     ASSERT_STREQ(minissd_get_property_name(prop), "name");
     ASSERT_STREQ(minissd_get_property_type(prop), "string");
@@ -47,12 +49,14 @@ TEST_F(ParserTest, ValidInput_Enum)
     parser = minissd_create_parser(source_code);
     ast = minissd_parse(parser);
 
-    ASSERT_NE(ast, nullptr);                           // Ensure AST is not NULL
-    ASSERT_EQ(minissd_get_node_type(ast), NODE_ENUM);  // Check if node type is 'enum'
-    ASSERT_STREQ(minissd_get_enum_name(ast), "Color"); // Check enum node name
+    ASSERT_NE(ast, nullptr);                                // Ensure AST is not NULL
+    NodeType const *node_type = minissd_get_node_type(ast); // Get node type
+    ASSERT_NE(node_type, nullptr);                          // Ensure node type is not NULL
+    ASSERT_EQ(*node_type, NODE_ENUM);                       // Check if node type is 'enum'
+    ASSERT_STREQ(minissd_get_enum_name(ast), "Color");      // Check enum node name
 
     // Check enum variants
-    EnumVariant *variant = minissd_get_enum_variants(ast);
+    EnumVariant const *variant = minissd_get_enum_variants(ast);
     ASSERT_NE(variant, nullptr); // Ensure there are enum variants
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
     ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 1); // Check variant for 'Red'
@@ -77,7 +81,9 @@ TEST_F(ParserTest, ValidInput_Import)
     ast = minissd_parse(parser);
 
     ASSERT_NE(ast, nullptr);                                  // Ensure AST is not NULL
-    ASSERT_EQ(minissd_get_node_type(ast), NODE_IMPORT);       // Check if node type is 'import'
+    NodeType const *node_type = minissd_get_node_type(ast);   // Get node type
+    ASSERT_NE(node_type, nullptr);                            // Ensure node type is not NULL
+    ASSERT_EQ(*node_type, NODE_IMPORT);                       // Check if node type is 'import'
     ASSERT_STREQ(minissd_get_import_path(ast), "my::module"); // Check path
 }
 
@@ -90,10 +96,12 @@ TEST_F(ParserTest, ValidInput_MissingEnumValues)
     ast = minissd_parse(parser);
 
     ASSERT_NE(ast, nullptr);
-    ASSERT_EQ(minissd_get_node_type(ast), NODE_ENUM);
+    NodeType const *node_type = minissd_get_node_type(ast); // Get node type
+    ASSERT_NE(node_type, nullptr);                          // Ensure node type is not NULL
+    ASSERT_EQ(*node_type, NODE_ENUM);                       // Check if node type is 'enum'
     ASSERT_STREQ(minissd_get_enum_name(ast), "Color");
 
-    EnumVariant *variant = minissd_get_enum_variants(ast);
+    EnumVariant const *variant = minissd_get_enum_variants(ast);
     ASSERT_NE(variant, nullptr);
     ASSERT_STREQ(minissd_get_enum_variant_name(variant), "Red");
     ASSERT_EQ(minissd_get_enum_variant(variant, nullptr), 0); // Default variant for 'Red'
@@ -172,22 +180,24 @@ TEST_F(ParserTest, ValidInput_WithAttributes)
     parser = minissd_create_parser(source_code);
     ast = minissd_parse(parser);
 
-    ASSERT_NE(ast, nullptr);                            // Ensure AST is not NULL
-    ASSERT_EQ(minissd_get_node_type(ast), NODE_DATA);   // Check if node type is 'data'
-    ASSERT_STREQ(minissd_get_data_name(ast), "Person"); // Check data node name
+    ASSERT_NE(ast, nullptr);                                // Ensure AST is not NULL
+    NodeType const *node_type = minissd_get_node_type(ast); // Get node type
+    ASSERT_NE(node_type, nullptr);                          // Ensure node type is not NULL
+    ASSERT_EQ(*node_type, NODE_DATA);                       // Check if node type is 'data'
+    ASSERT_STREQ(minissd_get_data_name(ast), "Person");     // Check data node name
 
-    Property *props = minissd_get_properties(ast);
+    Property const *props = minissd_get_properties(ast);
     ASSERT_NE(props, nullptr); // Ensure there are properties
 
     // Check for attributes
-    Attribute *attr = minissd_get_property_attributes(props);
+    Attribute const *attr = minissd_get_property_attributes(props);
     ASSERT_NE(attr, nullptr); // Ensure there are attributes
     ASSERT_STREQ(minissd_get_attribute_name(attr), "attr1");
 
-    AttributeArgument *arg = minissd_get_attribute_arguments(attr);
-    ASSERT_NE(arg, nullptr); // Ensure there are arguments
-    ASSERT_STREQ(arg->key, "name");
-    ASSERT_STREQ(arg->opt_value, "value1");
+    AttributeParameter const *param = minissd_get_attribute_parameters(attr);
+    ASSERT_NE(param, nullptr); // Ensure there are arguments
+    ASSERT_STREQ(param->key, "name");
+    ASSERT_STREQ(param->opt_value, "value1");
 }
 
 // Test for multiple attributes in the same node
@@ -198,15 +208,17 @@ TEST_F(ParserTest, ValidInput_MultipleAttributes)
     parser = minissd_create_parser(source_code);
     ast = minissd_parse(parser);
 
-    ASSERT_NE(ast, nullptr);                            // Ensure AST is not NULL
-    ASSERT_EQ(minissd_get_node_type(ast), NODE_DATA);   // Check if node type is 'data'
-    ASSERT_STREQ(minissd_get_data_name(ast), "Person"); // Check data node name
+    ASSERT_NE(ast, nullptr);                                // Ensure AST is not NULL
+    NodeType const *node_type = minissd_get_node_type(ast); // Get node type
+    ASSERT_NE(node_type, nullptr);                          // Ensure node type is not NULL
+    ASSERT_EQ(*node_type, NODE_DATA);                       // Check if node type is 'data'
+    ASSERT_STREQ(minissd_get_data_name(ast), "Person");     // Check data node name
 
-    Property *props = minissd_get_properties(ast);
+    Property const *props = minissd_get_properties(ast);
     ASSERT_NE(props, nullptr); // Ensure there are properties
 
     // Check for first attribute
-    Attribute *attr = minissd_get_property_attributes(props);
+    Attribute const *attr = minissd_get_property_attributes(props);
     ASSERT_NE(attr, nullptr); // Ensure there are attributes
     ASSERT_STREQ(minissd_get_attribute_name(attr), "attr1");
 
@@ -215,10 +227,10 @@ TEST_F(ParserTest, ValidInput_MultipleAttributes)
     ASSERT_NE(attr, nullptr); // Ensure there is another attribute
     ASSERT_STREQ(minissd_get_attribute_name(attr), "attr2");
 
-    AttributeArgument *arg = minissd_get_attribute_arguments(attr);
-    ASSERT_NE(arg, nullptr); // Ensure there are arguments
-    ASSERT_STREQ(arg->key, "name");
-    ASSERT_STREQ(arg->opt_value, "value1");
+    AttributeParameter const *param = minissd_get_attribute_parameters(attr);
+    ASSERT_NE(param, nullptr); // Ensure there are arguments
+    ASSERT_STREQ(param->key, "name");
+    ASSERT_STREQ(param->opt_value, "value1");
 }
 
 TEST_F(ParserTest, ValidInput_MultipleAttributes2)
@@ -228,15 +240,17 @@ TEST_F(ParserTest, ValidInput_MultipleAttributes2)
     parser = minissd_create_parser(source_code);
     ast = minissd_parse(parser);
 
-    ASSERT_NE(ast, nullptr);                            // Ensure AST is not NULL
-    ASSERT_EQ(minissd_get_node_type(ast), NODE_DATA);   // Check if node type is 'data'
-    ASSERT_STREQ(minissd_get_data_name(ast), "Person"); // Check data node name
+    ASSERT_NE(ast, nullptr);                                // Ensure AST is not NULL
+    NodeType const *node_type = minissd_get_node_type(ast); // Get node type
+    ASSERT_NE(node_type, nullptr);                          // Ensure node type is not NULL
+    ASSERT_EQ(*node_type, NODE_DATA);                       // Check if node type is 'data'
+    ASSERT_STREQ(minissd_get_data_name(ast), "Person");     // Check data node name
 
-    Property *props = minissd_get_properties(ast);
+    Property const *props = minissd_get_properties(ast);
     ASSERT_NE(props, nullptr); // Ensure there are properties
 
     // Check for first attribute
-    Attribute *attr = minissd_get_property_attributes(props);
+    Attribute const *attr = minissd_get_property_attributes(props);
     ASSERT_NE(attr, nullptr); // Ensure there are attributes
     ASSERT_STREQ(minissd_get_attribute_name(attr), "attr1");
 
@@ -245,8 +259,8 @@ TEST_F(ParserTest, ValidInput_MultipleAttributes2)
     ASSERT_NE(attr, nullptr); // Ensure there is another attribute
     ASSERT_STREQ(minissd_get_attribute_name(attr), "attr2");
 
-    AttributeArgument *arg = minissd_get_attribute_arguments(attr);
-    ASSERT_NE(arg, nullptr); // Ensure there are arguments
-    ASSERT_STREQ(arg->key, "name");
-    ASSERT_STREQ(arg->opt_value, "value1");
+    AttributeParameter const *param = minissd_get_attribute_parameters(attr);
+    ASSERT_NE(param, nullptr); // Ensure there are arguments
+    ASSERT_STREQ(param->key, "name");
+    ASSERT_STREQ(param->opt_value, "value1");
 }
