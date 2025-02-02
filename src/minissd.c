@@ -984,6 +984,7 @@ parse_service(Parser *p)
         {
             error(p, "Expected 'depends' or 'fn' keyword");
             free(ident);
+            free_events(event_head);
             free_dependencies(dep_head);
             free_handlers(handler_head);
             return NULL;
@@ -995,6 +996,7 @@ parse_service(Parser *p)
         if (p->current != ';')
         {
             error(p, "Expected ';' after service component");
+            free_events(event_head);
             free_dependencies(dep_head);
             free_handlers(handler_head);
             return NULL;
