@@ -5,15 +5,15 @@
 #include <stdio.h>
 #include <assert.h>
 
-void print_attributes(Attribute *attr)
+void print_attributes(Attribute const *attr)
 {
     while (attr)
     {
         printf("  Attribute: %s\n", minissd_get_attribute_name(attr));
 
-        for (AttributeArgument *arg = minissd_get_attribute_arguments(attr); arg; arg = minissd_get_next_attribute_argument(arg))
+        for (AttributeParameter const *arg = minissd_get_attribute_parameters(attr); arg; arg = minissd_get_next_attribute_parameter(arg))
         {
-            printf("    Argument: %s", arg->key);
+            printf("    Parameter: %s", arg->key);
             if (arg->opt_value)
             {
                 printf(" = %s", arg->opt_value);
@@ -61,10 +61,18 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    for (AstNode *node = ast; node; node = minissd_get_next_node(node))
+    for (AstNode const *node = ast; node; node = minissd_get_next_node(node))
     {
         printf("Node Type: ");
-        switch (minissd_get_node_type(node))
+        NodeType const *type = minissd_get_node_type(node);
+
+        if (!type)
+        {
+            printf("Unknown Node Type\n");
+            continue;
+        }
+
+        switch (*type)
         {
         case NODE_IMPORT:
             printf("Import\n");
@@ -77,7 +85,7 @@ int main(int argc, char **argv)
             printf("  Name: %s\n", minissd_get_data_name(node));
             print_attributes(minissd_get_attributes(node));
 
-            for (Property *prop = minissd_get_properties(node); prop; prop = minissd_get_next_property(prop))
+            for (Property const *prop = minissd_get_properties(node); prop; prop = minissd_get_next_property(prop))
             {
                 printf("  Property: %s : %s\n", minissd_get_property_name(prop), minissd_get_property_type(prop));
                 print_attributes(prop->attributes);
@@ -89,11 +97,11 @@ int main(int argc, char **argv)
             printf("  Name: %s\n", minissd_get_enum_name(node));
             print_attributes(minissd_get_attributes(node));
 
-            for (EnumVariant *value = minissd_get_enum_variants(node); value; value = minissd_get_next_enum_value(value))
+            for (EnumVariant const *value = minissd_get_enum_variants(node); value; value = minissd_get_next_enum_value(value))
             {
                 bool has_value;
                 int val = minissd_get_enum_variant(value, &has_value);
-                printf("  Enum Value: %s", minissd_get_enum_variant_name(value));
+                printf("  Enum Variant: %s", minissd_get_enum_variant_name(value));
                 if (has_value)
                 {
                     printf(" = %d", val);
@@ -108,30 +116,38 @@ int main(int argc, char **argv)
             printf("  Name: %s\n", minissd_get_service_name(node));
             print_attributes(minissd_get_attributes(node));
 
-            for (Dependency *dep = minissd_get_dependencies(node); dep; dep = minissd_get_next_dependency(dep))
+            for (Dependency const *dep = minissd_get_dependencies(node); dep; dep = minissd_get_next_dependency(dep))
             {
                 printf("  Depends: %s\n", minissd_get_dependency_path(dep));
                 print_attributes(dep->opt_ll_attributes);
             }
 
-            for (Handler *handler = minissd_get_handlers(node); handler; handler = minissd_get_next_handler(handler))
+            for (Handler const *handler = minissd_get_handlers(node); handler; handler = minissd_get_next_handler(handler))
             {
                 printf("  Handler: %s\n", handler->name);
-                print_attributes(handler->opt_ll_attributes);
                 if (handler->opt_return_type)
                 {
                     printf("    Return Type: %s\n", handler->opt_return_type);
                 }
-                for (HandlerArgument *arg = minissd_get_handler_arguments(handler); arg; arg = minissd_get_next_handler_argument(arg))
+                for (Argument const *arg = minissd_get_handler_arguments(handler); arg; arg = minissd_get_next_argument(arg))
                 {
                     printf("    Argument: %s : %s\n", minissd_get_argument_name(arg), minissd_get_argument_type(arg));
                     print_attributes(minissd_get_argument_attributes(arg));
                 }
+                print_attributes(handler->opt_ll_attributes);
+            }
+
+            for (Event const *event = minissd_get_events(node); event; event = minissd_get_next_event(event))
+            {
+                printf("  Event: %s\n", event->name);
+                for (Argument const *arg = minissd_get_event_arguments(event); arg; arg = minissd_get_next_argument(arg))
+                {
+                    printf("    Argument: %s : %s\n", minissd_get_argument_name(arg), minissd_get_argument_type(arg));
+                    print_attributes(minissd_get_argument_attributes(arg));
+                }
+                print_attributes(event->opt_ll_attributes);
             }
             break;
-
-        default:
-            printf("Unknown Node Type\n");
         }
     }
 

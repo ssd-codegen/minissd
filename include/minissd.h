@@ -15,17 +15,17 @@
 extern "C"
 {
 #endif
-    typedef struct AttributeArgument
+    typedef struct AttributeParameter
     {
         char *key;
         char *opt_value; // Nullable
-        struct AttributeArgument *next;
-    } AttributeArgument;
+        struct AttributeParameter *next;
+    } AttributeParameter;
 
     typedef struct Attribute
     {
         char *name;
-        AttributeArgument *opt_ll_arguments;
+        AttributeParameter *opt_ll_arguments;
         struct Attribute *next;
     } Attribute;
 
@@ -45,22 +45,30 @@ extern "C"
         struct EnumVariant *next;
     } EnumVariant;
 
-    typedef struct HandlerArgument
+    typedef struct Argument
     {
         Attribute *attributes;
         char *name;
         char *type;
-        struct HandlerArgument *next;
-    } HandlerArgument;
+        struct Argument *next;
+    } Argument;
 
     typedef struct Handler
     {
         Attribute *opt_ll_attributes;
         char *name;
-        HandlerArgument *opt_ll_arguments;
+        Argument *opt_ll_arguments;
         char *opt_return_type;
         struct Handler *next;
     } Handler;
+
+    typedef struct Event
+    {
+        Attribute *opt_ll_attributes;
+        char *name;
+        Argument *opt_ll_arguments;
+        struct Event *next;
+    } Event;
 
     typedef struct Dependency
     {
@@ -91,6 +99,7 @@ extern "C"
         char *name;
         Dependency *opt_ll_dependencies;
         Handler *ll_handlers;
+        Event *opt_ll_events;
     } Service;
 
     typedef enum
@@ -118,7 +127,7 @@ extern "C"
     typedef struct
     {
         const char *input;
-        int input_length;
+        size_t input_length;
         char error[MAX_ERROR_SIZE];
         char current;
         int index;
@@ -135,48 +144,110 @@ extern "C"
     void minissd_free_ast(AstNode *ast);
 
     // AST Node accessors
-    NodeType minissd_get_node_type(const AstNode *node);
-    const char *minissd_get_import_path(const AstNode *node);
-    const char *minissd_get_data_name(const AstNode *node);
-    const char *minissd_get_enum_name(const AstNode *node);
-    const char *minissd_get_handler_name(const AstNode *node);
+    NodeType const *
+    minissd_get_node_type(AstNode const *node);
+
+    char const *
+    minissd_get_import_path(AstNode const *node);
+
+    char const *
+    minissd_get_data_name(AstNode const *node);
+
+    char const *
+    minissd_get_enum_name(AstNode const *node);
+
+    char const *
+    minissd_get_handler_name(AstNode const *node);
 
     // Attribute accessors
-    Attribute *minissd_get_attributes(const AstNode *node);
-    const char *minissd_get_attribute_name(const Attribute *attr);
-    AttributeArgument *minissd_get_attribute_arguments(const Attribute *attr);
+    Attribute const *
+    minissd_get_attributes(AstNode const *node);
+
+    char const *
+    minissd_get_attribute_name(Attribute const *attr);
+
+    AttributeParameter const *
+    minissd_get_attribute_parameters(Attribute const *attr);
 
     // Property and EnumVariant accessors
-    Property *minissd_get_properties(const AstNode *node);
-    const char *minissd_get_property_name(const Property *prop);
-    Attribute *minissd_get_property_attributes(const Property *prop);
-    const char *minissd_get_property_type(const Property *prop);
+    Property const *
+    minissd_get_properties(AstNode const *node);
 
-    EnumVariant *minissd_get_enum_variants(const AstNode *node);
-    const char *minissd_get_enum_variant_name(const EnumVariant *value);
-    Attribute *minissd_get_enum_variant_attributes(const EnumVariant *value);
-    int minissd_get_enum_variant(const EnumVariant *value, bool *has_value);
+    char const *
+    minissd_get_property_name(Property const *prop);
 
-    const char *minissd_get_service_name(const AstNode *node);
-    HandlerArgument *minissd_get_handler_arguments(const Handler *node);
-    const char *minissd_get_argument_name(const HandlerArgument *prop);
-    Attribute *minissd_get_argument_attributes(const HandlerArgument *prop);
-    const char *minissd_get_argument_type(const HandlerArgument *prop);
+    Attribute const *
+    minissd_get_property_attributes(Property const *prop);
 
-    Dependency *minissd_get_dependencies(const AstNode *node);
-    Handler *minissd_get_handlers(const AstNode *node);
+    char const *
+    minissd_get_property_type(Property const *prop);
 
-    Dependency *minissd_get_next_dependency(const Dependency *dep);
-    Handler *minissd_get_next_handler(const Handler *handler);
-    const char *minissd_get_dependency_path(const Dependency *dep);
+    EnumVariant const *
+    minissd_get_enum_variants(AstNode const *node);
+
+    char const *
+    minissd_get_enum_variant_name(EnumVariant const *value);
+
+    Attribute const *
+    minissd_get_enum_variant_attributes(EnumVariant const *value);
+
+    int minissd_get_enum_variant(EnumVariant const *value, bool *has_value);
+
+    char const *
+    minissd_get_service_name(AstNode const *node);
+
+    Argument const *
+    minissd_get_handler_arguments(Handler const *node);
+
+    Argument const *
+    minissd_get_event_arguments(Event const *event);
+
+    char const *
+    minissd_get_argument_name(Argument const *prop);
+
+    Attribute const *
+    minissd_get_argument_attributes(Argument const *prop);
+
+    char const *
+    minissd_get_argument_type(Argument const *prop);
+
+    Dependency const *
+    minissd_get_dependencies(AstNode const *node);
+    Handler const *
+    minissd_get_handlers(AstNode const *node);
+
+    Event const *
+    minissd_get_events(AstNode const *node);
+
+    Dependency const *
+    minissd_get_next_dependency(Dependency const *dep);
+
+    Handler const *
+    minissd_get_next_handler(Handler const *handler);
+
+    Event const *
+    minissd_get_next_event(Event const *event);
+
+    char const *minissd_get_dependency_path(Dependency const *dep);
 
     // Traversal functions
-    AstNode *minissd_get_next_node(const AstNode *node);
-    Property *minissd_get_next_property(const Property *prop);
-    EnumVariant *minissd_get_next_enum_value(const EnumVariant *value);
-    Attribute *minissd_get_next_attribute(const Attribute *attr);
-    AttributeArgument *minissd_get_next_attribute_argument(const AttributeArgument *arg);
-    HandlerArgument *minissd_get_next_handler_argument(const HandlerArgument *arg);
+    AstNode const *
+    minissd_get_next_node(AstNode const *node);
+
+    Property const *
+    minissd_get_next_property(Property const *prop);
+
+    EnumVariant const *
+    minissd_get_next_enum_value(EnumVariant const *value);
+
+    Attribute const *
+    minissd_get_next_attribute(Attribute const *attr);
+
+    AttributeParameter const *
+    minissd_get_next_attribute_parameter(AttributeParameter const *arg);
+
+    Argument const *
+    minissd_get_next_argument(Argument const *arg);
 
 #ifdef __cplusplus
 }
