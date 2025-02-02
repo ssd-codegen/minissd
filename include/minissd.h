@@ -98,7 +98,7 @@ extern "C"
     {
         char *name;
         Dependency *opt_ll_dependencies;
-        Handler *ll_handlers;
+        Handler *opt_ll_handlers;
         Event *opt_ll_events;
     } Service;
 
@@ -157,7 +157,13 @@ extern "C"
     minissd_get_enum_name(AstNode const *node);
 
     char const *
-    minissd_get_handler_name(AstNode const *node);
+    minissd_get_handler_name(Handler const *node);
+
+    char const *
+    minissd_get_handler_return_type(Handler const *handler);
+
+    char const *
+    minissd_get_event_name(Event const *event);
 
     // Attribute accessors
     Attribute const *
@@ -238,13 +244,19 @@ extern "C"
     minissd_get_next_property(Property const *prop);
 
     EnumVariant const *
-    minissd_get_next_enum_value(EnumVariant const *value);
+    minissd_get_next_enum_variant(EnumVariant const *value);
 
     Attribute const *
     minissd_get_next_attribute(Attribute const *attr);
 
     AttributeParameter const *
     minissd_get_next_attribute_parameter(AttributeParameter const *arg);
+
+    char const *
+    minissd_get_attribute_parameter_name(AttributeParameter const *arg);
+
+    char const *
+    minissd_get_attribute_parameter_value(AttributeParameter const *arg);
 
     Argument const *
     minissd_get_next_argument(Argument const *arg);

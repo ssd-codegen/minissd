@@ -2,6 +2,7 @@
     "cSpell.words": [
         "libgtest",
         "MINISSD",
+        "STREQ",
         "valgrind"
     ],
     "files.associations": {

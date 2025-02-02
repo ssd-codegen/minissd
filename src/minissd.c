@@ -225,7 +225,7 @@ free_ast(AstNode *ast)
                 free(current->node.service_node.name);
             }
             free_dependencies(current->node.service_node.opt_ll_dependencies);
-            free_handlers(current->node.service_node.ll_handlers);
+            free_handlers(current->node.service_node.opt_ll_handlers);
             break;
         default:
             break;
@@ -709,6 +709,13 @@ parse_properties(Parser *p)
         return NULL;
     }
     advance(p);
+
+    if (!head)
+    {
+        error(p, "Expected property");
+        return NULL;
+    }
+
     return head;
 }
 
@@ -771,7 +778,7 @@ parse_handler_arguments(Parser *p)
 
 typedef struct ServiceComponents
 {
-    Handler *ll_handlers;
+    Handler *opt_ll_handlers;
     Dependency *opt_ll_dependencies;
     Event *opt_ll_events;
 } ServiceComponents;
@@ -779,7 +786,7 @@ typedef struct ServiceComponents
 static void
 free_service_components(ServiceComponents *sc)
 {
-    free_handlers(sc->ll_handlers);
+    free_handlers(sc->opt_ll_handlers);
     free_dependencies(sc->opt_ll_dependencies);
     free(sc);
 }
@@ -1007,7 +1014,7 @@ parse_service(Parser *p)
     }
     advance(p);
     ServiceComponents *sc = (ServiceComponents *)calloc(1, sizeof(ServiceComponents));
-    sc->ll_handlers = handler_head;
+    sc->opt_ll_handlers = handler_head;
     sc->opt_ll_dependencies = dep_head;
     sc->opt_ll_events = event_head;
     return sc;
@@ -1102,15 +1109,15 @@ parse_node(Parser *p)
             free_ast(node);
             return NULL;
         };
-        if (!sc->ll_handlers)
+        if (!sc->opt_ll_handlers && !sc->opt_ll_events)
         {
-            error(p, "Service must have at least one handler");
+            error(p, "Service must have at least one handler or event");
             free_service_components(sc);
             free(ident);
             free_ast(node);
             return NULL;
         }
-        node->node.service_node.ll_handlers = sc->ll_handlers;
+        node->node.service_node.opt_ll_handlers = sc->opt_ll_handlers;
         node->node.service_node.opt_ll_dependencies = sc->opt_ll_dependencies;
         node->node.service_node.opt_ll_events = sc->opt_ll_events;
         free(sc);
@@ -1243,9 +1250,21 @@ minissd_get_enum_name(AstNode const *node)
 }
 
 char const *
-minissd_get_handler_name(AstNode const *node)
+minissd_get_handler_name(Handler const *handler)
 {
-    return (node && node->type == NODE_SERVICE) ? node->node.service_node.name : NULL;
+    return (handler) ? handler->name : NULL;
+}
+
+char const *
+minissd_get_handler_return_type(Handler const *handler)
+{
+    return (handler) ? handler->opt_return_type : NULL;
+}
+
+char const *
+minissd_get_event_name(Event const *event)
+{
+    return (event) ? event->name : NULL;
 }
 
 // Attribute accessors
@@ -1301,7 +1320,7 @@ minissd_get_dependencies(AstNode const *node)
 Handler const *
 minissd_get_handlers(AstNode const *node)
 {
-    return (node && node->type == NODE_SERVICE) ? node->node.service_node.ll_handlers : NULL;
+    return (node && node->type == NODE_SERVICE) ? node->node.service_node.opt_ll_handlers : NULL;
 }
 
 Event const *
@@ -1388,7 +1407,7 @@ minissd_get_next_property(Property const *prop)
 }
 
 EnumVariant const *
-minissd_get_next_enum_value(EnumVariant const *value)
+minissd_get_next_enum_variant(EnumVariant const *value)
 {
     return value ? value->next : NULL;
 }
@@ -1403,6 +1422,18 @@ AttributeParameter const *
 minissd_get_next_attribute_parameter(AttributeParameter const *arg)
 {
     return arg ? arg->next : NULL;
+}
+
+char const *
+minissd_get_attribute_parameter_name(AttributeParameter const *arg)
+{
+    return arg ? arg->key : NULL;
+}
+
+char const *
+minissd_get_attribute_parameter_value(AttributeParameter const *arg)
+{
+    return arg ? arg->opt_value : NULL;
 }
 
 Dependency const *
