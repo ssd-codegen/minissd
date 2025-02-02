@@ -17,18 +17,13 @@
 static char *
 strdup_c99(const char *s)
 {
-    if (s == NULL)
-    {
-        return NULL;
-    }
+    assert(s);
 
     size_t len = strlen(s) + 1;
     char *dup = (char *)malloc(len);
+    assert(dup);
 
-    if (dup)
-    {
-        memcpy(dup, s, len);
-    }
+    memcpy(dup, s, len);
 
     return dup;
 }
@@ -788,6 +783,7 @@ free_service_components(ServiceComponents *sc)
 {
     free_handlers(sc->opt_ll_handlers);
     free_dependencies(sc->opt_ll_dependencies);
+    free_events(sc->opt_ll_events);
     free(sc);
 }
 
@@ -815,6 +811,7 @@ parse_service(Parser *p)
         {
             error(p, "Expected 'depends' or 'fn' keyword");
             free(ident);
+            free_attributes(attributes);
             free_dependencies(dep_head);
             free_handlers(handler_head);
             free_events(event_head);
@@ -992,6 +989,7 @@ parse_service(Parser *p)
             error(p, "Expected 'depends' or 'fn' keyword");
             free(ident);
             free_events(event_head);
+            free_attributes(attributes);
             free_dependencies(dep_head);
             free_handlers(handler_head);
             return NULL;
