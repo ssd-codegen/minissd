@@ -7,6 +7,18 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#ifdef ADD_CONTEXT
+#define CTX(s) s
+#else
+#define CTX(s) NULL
+#endif
+
+#ifdef DEBUG_HAPPY_PATH
+#define DBG(...) printf(__VA_ARGS__)
+#else
+#define DBG(...)
+#endif
+
 #define CHECKED_DECLARE(type, obj, func) \
     type obj = func(p);                  \
     if (!obj)                            \
@@ -281,6 +293,7 @@ advance(Parser *p)
 static void
 eat_whitespaces_and_comments(Parser *p)
 {
+    DBG("Try eating whitespaces and comments\n");
     bool comment = true;
     while (comment)
     {
@@ -329,6 +342,7 @@ parse_path(Parser *p)
         error(p, "Expected import path");
         return NULL;
     }
+    DBG("Path: %s\n", buffer);
     return strdup_c99(buffer);
 }
 
@@ -356,6 +370,7 @@ parse_int(Parser *p)
     int *value = (int *)malloc(sizeof(int));
     assert(value);
     *value = atoi(buffer);
+    DBG("Integer: %d\n", *value);
     return value;
 }
 
@@ -387,11 +402,12 @@ parse_string(Parser *p)
     }
     advance(p);
     buffer[length] = '\0';
+    DBG("String: %s\n", buffer);
     return strdup_c99(buffer);
 }
 
 static char *
-parse_identifier(Parser *p)
+parse_identifier(Parser *p, char const *context)
 {
     char buffer[MAX_TOKEN_SIZE + 1];
     int length = 0;
@@ -408,19 +424,31 @@ parse_identifier(Parser *p)
     buffer[length] = '\0';
     if (length == 0)
     {
-        error(p, "Expected identifier");
+        if (context)
+        {
+            char error_buffer[MAX_ERROR_SIZE + 1];
+            snprintf(error_buffer, MAX_ERROR_SIZE, "Expected identifier in context: %s", context);
+            error(p, error_buffer);
+        }
+        else
+        {
+            error(p, "Expected identifier");
+        }
         return NULL;
     }
+    DBG("Identifier: %s\n", buffer);
     return strdup_c99(buffer);
 }
 
 static Attribute *
 parse_attributes(Parser *p)
 {
+    DBG("Try parsing attributes\n");
     Attribute *head = NULL, *tail = NULL;
     eat_whitespaces_and_comments(p);
     while (p->current == '#')
     {
+        DBG("Found attribute\n");
         advance(p);
         eat_whitespaces_and_comments(p);
         if (p->current != '[')
@@ -430,6 +458,7 @@ parse_attributes(Parser *p)
             return NULL;
         }
         advance(p);
+        DBG("Parsing attributes\n");
         eat_whitespaces_and_comments(p);
         while (p->current != ']')
         {
@@ -437,7 +466,8 @@ parse_attributes(Parser *p)
             assert(attr);
 
             eat_whitespaces_and_comments(p);
-            attr->name = parse_identifier(p);
+            attr->name = parse_identifier(p, CTX("attributes"));
+            DBG("Attribute name: %s\n", attr->name);
             if (!attr->name)
             {
                 free_attributes(attr);
@@ -450,6 +480,7 @@ parse_attributes(Parser *p)
             {
                 advance(p);
                 AttributeParameter *arg_head = NULL, *arg_tail = NULL;
+                DBG("Parsing attribute parameters\n");
 
                 eat_whitespaces_and_comments(p);
                 while (p->current != ')')
@@ -457,8 +488,10 @@ parse_attributes(Parser *p)
                     AttributeParameter *arg = (AttributeParameter *)calloc(1, sizeof(AttributeParameter));
                     assert(arg);
 
+                    DBG("Parsing attribute parameter\n");
+
                     eat_whitespaces_and_comments(p);
-                    arg->key = parse_identifier(p);
+                    arg->key = parse_identifier(p, CTX("attribute arguments"));
                     if (!arg->key)
                     {
                         free_attribute_parameters(arg);
@@ -467,11 +500,13 @@ parse_attributes(Parser *p)
                         free_attributes(head);
                         return NULL;
                     };
+                    DBG("Attribute parameter key: %s\n", arg->key);
 
                     eat_whitespaces_and_comments(p);
                     if (p->current == '=')
                     {
                         advance(p);
+                        DBG("Parsing attribute parameter value\n");
                         eat_whitespaces_and_comments(p);
                         arg->opt_value = parse_string(p);
                         if (!arg->opt_value)
@@ -482,6 +517,7 @@ parse_attributes(Parser *p)
                             free_attributes(head);
                             return NULL;
                         };
+                        DBG("Attribute parameter value: %s\n", arg->opt_value);
                     }
 
                     if (!arg_head)
@@ -497,6 +533,7 @@ parse_attributes(Parser *p)
                     eat_whitespaces_and_comments(p);
                     if (p->current != ',')
                     {
+                        DBG("No more attribute parameters\n");
                         break;
                     }
                     advance(p);
@@ -529,6 +566,7 @@ parse_attributes(Parser *p)
             eat_whitespaces_and_comments(p);
             if (p->current != ',')
             {
+                DBG("No more attributes\n");
                 break;
             }
             advance(p);
@@ -544,12 +582,14 @@ parse_attributes(Parser *p)
         advance(p);
         eat_whitespaces_and_comments(p);
     }
+    DBG("Parsed attributes\n");
     return head;
 }
 
 static EnumVariant *
 parse_enum_variants(Parser *p)
 {
+    DBG("Try parsing enum variants\n");
     if (p->current != '{')
     {
         error(p, "Expected '{' after enum name");
@@ -562,26 +602,32 @@ parse_enum_variants(Parser *p)
     eat_whitespaces_and_comments(p);
     while (p->current != '}')
     {
-
+        DBG("Parsing enum variant\n");
         EnumVariant *ev = (EnumVariant *)calloc(1, sizeof(EnumVariant));
         assert(ev);
 
         eat_whitespaces_and_comments(p);
         ev->attributes = parse_attributes(p);
+        if (ev->attributes)
+        {
+            DBG("Found attributes\n");
+        }
 
         eat_whitespaces_and_comments(p);
-        ev->name = parse_identifier(p);
+        ev->name = parse_identifier(p, CTX("enum variant"));
         if (!ev->name)
         {
             free_enum_variants(ev);
             free_enum_variants(head);
             return NULL;
         };
+        DBG("Enum variant name: %s\n", ev->name);
 
         eat_whitespaces_and_comments(p);
         if (p->current == '=')
         {
             advance(p);
+            DBG("Parsing enum variant value\n");
 
             eat_whitespaces_and_comments(p);
             ev->opt_value = parse_int(p);
@@ -591,6 +637,7 @@ parse_enum_variants(Parser *p)
                 free_enum_variants(head);
                 return NULL;
             };
+            DBG("Enum variant value: %d\n", *ev->opt_value);
         }
 
         if (!head)
@@ -606,6 +653,7 @@ parse_enum_variants(Parser *p)
         eat_whitespaces_and_comments(p);
         if (p->current != ',')
         {
+            DBG("No more enum variants\n");
             break;
         }
         advance(p);
@@ -625,12 +673,14 @@ parse_enum_variants(Parser *p)
         error(p, "Enum must have at least one variant");
         return NULL;
     }
+    DBG("Parsed enum variants\n");
     return head;
 }
 
 static Property *
 parse_properties(Parser *p)
 {
+    DBG("Try parsing properties\n");
     if (p->current != '{')
     {
         error(p, "Expected '{' after data name");
@@ -643,21 +693,27 @@ parse_properties(Parser *p)
     eat_whitespaces_and_comments(p);
     while (p->current != '}')
     {
+        DBG("Parsing property\n");
 
         Property *prop = (Property *)calloc(1, sizeof(Property));
         assert(prop);
 
         eat_whitespaces_and_comments(p);
         prop->attributes = parse_attributes(p);
+        if (prop->attributes)
+        {
+            DBG("Found attributes\n");
+        }
 
         eat_whitespaces_and_comments(p);
-        prop->name = parse_identifier(p);
+        prop->name = parse_identifier(p, CTX("property"));
         if (!prop->name)
         {
             free_properties(prop);
             free_properties(head);
             return NULL;
         };
+        DBG("Property name: %s\n", prop->name);
 
         eat_whitespaces_and_comments(p);
         if (p->current != ':')
@@ -668,15 +724,17 @@ parse_properties(Parser *p)
             return NULL;
         }
         advance(p);
+        DBG("Parsing property type\n");
 
         eat_whitespaces_and_comments(p);
-        prop->type = parse_identifier(p);
+        prop->type = parse_identifier(p, CTX("property type"));
         if (!prop->type)
         {
             free_properties(prop);
             free_properties(head);
             return NULL;
         };
+        DBG("Property type: %s\n", prop->type);
 
         if (!head)
         {
@@ -691,6 +749,7 @@ parse_properties(Parser *p)
         eat_whitespaces_and_comments(p);
         if (p->current != ',')
         {
+            DBG("No more properties\n");
             break;
         }
         advance(p);
@@ -711,6 +770,7 @@ parse_properties(Parser *p)
         error(p, "Expected property");
         return NULL;
     }
+    DBG("Parsed properties\n");
 
     return head;
 }
@@ -718,14 +778,21 @@ parse_properties(Parser *p)
 static Argument *
 parse_handler_arguments(Parser *p)
 {
+    DBG("Try parsing handler arguments\n");
     Argument *head = NULL, *tail = NULL;
     while (p->current != ')')
     {
+        DBG("Parsing handler argument\n");
         Argument *arg = (Argument *)calloc(1, sizeof(Argument));
         assert(arg);
         eat_whitespaces_and_comments(p);
-        arg->name = parse_identifier(p);
+        arg->attributes = parse_attributes(p);
+        if (arg->attributes)
+        {
+            DBG("Found attributes\n");
+        }
         eat_whitespaces_and_comments(p);
+        arg->name = parse_identifier(p, CTX("handler argument"));
         if (!arg->name)
         {
             error(p, "Expected argument name");
@@ -733,6 +800,8 @@ parse_handler_arguments(Parser *p)
             free_arguments(head);
             return NULL;
         };
+        DBG("Argument name: %s\n", arg->name);
+        eat_whitespaces_and_comments(p);
         if (p->current != ':')
         {
             error(p, "Expected ':' after argument name");
@@ -741,8 +810,9 @@ parse_handler_arguments(Parser *p)
             return NULL;
         }
         advance(p);
+        DBG("Parsing argument type\n");
         eat_whitespaces_and_comments(p);
-        arg->type = parse_identifier(p);
+        arg->type = parse_identifier(p, CTX("handler argument type"));
         eat_whitespaces_and_comments(p);
         if (!arg->type)
         {
@@ -751,6 +821,7 @@ parse_handler_arguments(Parser *p)
             free_arguments(head);
             return NULL;
         };
+        DBG("Argument type: %s\n", arg->type);
 
         if (!head)
         {
@@ -764,11 +835,13 @@ parse_handler_arguments(Parser *p)
 
         if (p->current != ',')
         {
+            DBG("No more arguments\n");
             break;
         }
         advance(p);
         eat_whitespaces_and_comments(p);
     }
+    DBG("Parsed handler arguments\n");
     return head;
 }
 
@@ -791,6 +864,7 @@ free_service_components(ServiceComponents *sc)
 static ServiceComponents *
 parse_service(Parser *p)
 {
+    DBG("Try parsing service\n");
     if (p->current != '{')
     {
         error(p, "Expected '{' after service name");
@@ -804,10 +878,15 @@ parse_service(Parser *p)
 
     while (p->current != '}')
     {
+        DBG("Parsing service component\n");
         eat_whitespaces_and_comments(p);
         Attribute *attributes = parse_attributes(p);
+        if (attributes)
+        {
+            DBG("Found attributes\n");
+        }
         eat_whitespaces_and_comments(p);
-        char *ident = parse_identifier(p);
+        char *ident = parse_identifier(p, CTX("service component"));
         if (!ident)
         {
             error(p, "Expected 'depends' or 'fn' keyword");
@@ -818,16 +897,18 @@ parse_service(Parser *p)
             free_events(event_head);
             return NULL;
         };
+        DBG("Service component: %s\n", ident);
 
         if (strcmp(ident, "depends") == 0)
         {
+            DBG("Parsing dependency\n");
             Dependency *dep = (Dependency *)calloc(1, sizeof(Dependency));
             assert(dep);
 
             dep->opt_ll_attributes = attributes;
 
             eat_whitespaces_and_comments(p);
-            char *on = parse_identifier(p);
+            char *on = parse_identifier(p, CTX("dependency"));
             if (!on || strcmp(on, "on") != 0)
             {
                 error(p, "Expected 'on' keyword");
@@ -844,6 +925,7 @@ parse_service(Parser *p)
             }
             free(on);
             eat_whitespaces_and_comments(p);
+            DBG("Parsing dependency path\n");
 
             dep->path = parse_path(p);
             if (!dep->path)
@@ -856,6 +938,7 @@ parse_service(Parser *p)
                 free_events(event_head);
                 return NULL;
             };
+            DBG("Dependency path: %s\n", dep->path);
 
             if (!dep_head)
             {
@@ -869,13 +952,14 @@ parse_service(Parser *p)
         }
         else if (strcmp(ident, "fn") == 0)
         {
+            DBG("Parsing handler\n");
             Handler *handler = (Handler *)calloc(1, sizeof(Handler));
             assert(handler);
 
             handler->opt_ll_attributes = attributes;
 
             eat_whitespaces_and_comments(p);
-            handler->name = parse_identifier(p);
+            handler->name = parse_identifier(p, CTX("handler"));
 
             if (!handler->name)
             {
@@ -887,6 +971,8 @@ parse_service(Parser *p)
                 free_dependencies(dep_head);
                 return NULL;
             };
+
+            DBG("Handler name: %s\n", handler->name);
 
             eat_whitespaces_and_comments(p);
             if (p->current != '(')
@@ -900,9 +986,18 @@ parse_service(Parser *p)
                 return NULL;
             }
             advance(p);
+            DBG("Parsing handler arguments\n");
 
             eat_whitespaces_and_comments(p);
             handler->opt_ll_arguments = parse_handler_arguments(p);
+            if (handler->opt_ll_arguments)
+            {
+                DBG("Found handler arguments\n");
+            }
+            else
+            {
+                DBG("No handler arguments\n");
+            }
             eat_whitespaces_and_comments(p);
 
             if (p->current != ')')
@@ -922,8 +1017,9 @@ parse_service(Parser *p)
             {
                 advance(p);
                 advance(p);
+                DBG("Parsing handler return type\n");
                 eat_whitespaces_and_comments(p);
-                handler->opt_return_type = parse_identifier(p);
+                handler->opt_return_type = parse_identifier(p, CTX("handler return type"));
                 eat_whitespaces_and_comments(p);
                 if (!handler->opt_return_type)
                 {
@@ -935,6 +1031,7 @@ parse_service(Parser *p)
                     free_dependencies(dep_head);
                     return NULL;
                 };
+                DBG("Handler return type: %s\n", handler->opt_return_type);
             }
 
             if (!handler_head)
@@ -949,12 +1046,13 @@ parse_service(Parser *p)
         }
         else if (strcmp(ident, "event") == 0)
         {
+            DBG("Parsing event\n");
             Event *event = (Event *)calloc(1, sizeof(Event));
             assert(event);
             event->opt_ll_attributes = attributes;
 
             eat_whitespaces_and_comments(p);
-            event->name = parse_identifier(p);
+            event->name = parse_identifier(p, CTX("event"));
             if (!event->name)
             {
                 error(p, "Expected event name");
@@ -965,6 +1063,7 @@ parse_service(Parser *p)
                 free_handlers(handler_head);
                 return NULL;
             };
+            DBG("Event name: %s\n", event->name);
 
             eat_whitespaces_and_comments(p);
             if (p->current != '(')
@@ -978,9 +1077,18 @@ parse_service(Parser *p)
                 return NULL;
             }
             advance(p);
+            DBG("Parsing event arguments\n");
 
             eat_whitespaces_and_comments(p);
             event->opt_ll_arguments = parse_handler_arguments(p);
+            if (event->opt_ll_arguments)
+            {
+                DBG("Found event arguments\n");
+            }
+            else
+            {
+                DBG("No event arguments\n");
+            }
             eat_whitespaces_and_comments(p);
             if (p->current != ')')
             {
@@ -993,6 +1101,7 @@ parse_service(Parser *p)
                 return NULL;
             }
             advance(p);
+            DBG("Parsed event arguments\n");
             eat_whitespaces_and_comments(p);
 
             if (!event_head)
@@ -1028,10 +1137,14 @@ parse_service(Parser *p)
             return NULL;
         }
         advance(p);
+        DBG("Parsed service component\n");
 
         eat_whitespaces_and_comments(p);
     }
     advance(p);
+
+    DBG("Parsed service\n");
+
     ServiceComponents *sc = (ServiceComponents *)calloc(1, sizeof(ServiceComponents));
     sc->opt_ll_handlers = handler_head;
     sc->opt_ll_dependencies = dep_head;
@@ -1042,16 +1155,22 @@ parse_service(Parser *p)
 static AstNode *
 parse_node(Parser *p)
 {
+    DBG("Parsing node\n");
     eat_whitespaces_and_comments(p);
     Attribute *attributes = parse_attributes(p);
+    if (attributes)
+    {
+        DBG("Found attributes\n");
+    }
 
     eat_whitespaces_and_comments(p);
-    char *ident = parse_identifier(p);
+    char *ident = parse_identifier(p, CTX("node"));
     if (!ident)
     {
         free_attributes(attributes);
         return NULL;
     };
+    DBG("Node type: %s\n", ident);
     AstNode *node = (AstNode *)calloc(1, sizeof(AstNode));
     assert(node);
 
@@ -1059,6 +1178,7 @@ parse_node(Parser *p)
     node->opt_ll_attributes = attributes;
     if (strcmp(ident, "import") == 0)
     {
+        DBG("Parsing import\n");
         node->type = NODE_IMPORT;
         node->node.import_node.path = parse_path(p);
         if (!node->node.import_node.path)
@@ -1068,11 +1188,13 @@ parse_node(Parser *p)
             free_ast(node);
             return NULL;
         };
+        DBG("Import path: %s\n", node->node.import_node.path);
     }
     else if (strcmp(ident, "data") == 0)
     {
+        DBG("Parsing data\n");
         node->type = NODE_DATA;
-        node->node.data_node.name = parse_identifier(p);
+        node->node.data_node.name = parse_identifier(p, CTX("data"));
         if (!node->node.data_node.name)
         {
             error(p, "Expected data name");
@@ -1080,6 +1202,7 @@ parse_node(Parser *p)
             free_ast(node);
             return NULL;
         };
+        DBG("Data name: %s\n", node->node.data_node.name);
         eat_whitespaces_and_comments(p);
         node->node.data_node.ll_properties = parse_properties(p);
         if (!node->node.data_node.ll_properties)
@@ -1088,11 +1211,13 @@ parse_node(Parser *p)
             free_ast(node);
             return NULL;
         };
+        DBG("Parsed properties\n");
     }
     else if (strcmp(ident, "enum") == 0)
     {
+        DBG("Parsing enum\n");
         node->type = NODE_ENUM;
-        node->node.enum_node.name = parse_identifier(p);
+        node->node.enum_node.name = parse_identifier(p, CTX("enum"));
         if (!node->node.enum_node.name)
         {
             error(p, "Expected enum name");
@@ -1100,6 +1225,7 @@ parse_node(Parser *p)
             free_ast(node);
             return NULL;
         };
+        DBG("Enum name: %s\n", node->node.enum_node.name);
         eat_whitespaces_and_comments(p);
         node->node.enum_node.ll_variants = parse_enum_variants(p);
         if (!node->node.enum_node.ll_variants)
@@ -1108,11 +1234,13 @@ parse_node(Parser *p)
             free_ast(node);
             return NULL;
         };
+        DBG("Parsed enum variants\n");
     }
     else if (strcmp(ident, "service") == 0)
     {
+        DBG("Parsing service\n");
         node->type = NODE_SERVICE;
-        node->node.service_node.name = parse_identifier(p);
+        node->node.service_node.name = parse_identifier(p, CTX("service"));
         if (!node->node.service_node.name)
         {
             error(p, "Expected service name");
@@ -1120,6 +1248,7 @@ parse_node(Parser *p)
             free_ast(node);
             return NULL;
         };
+        DBG("Service name: %s\n", node->node.service_node.name);
         eat_whitespaces_and_comments(p);
         ServiceComponents *sc = parse_service(p);
         if (!sc)
@@ -1136,6 +1265,7 @@ parse_node(Parser *p)
             free_ast(node);
             return NULL;
         }
+        DBG("Parsed service components\n");
         node->node.service_node.opt_ll_handlers = sc->opt_ll_handlers;
         node->node.service_node.opt_ll_dependencies = sc->opt_ll_dependencies;
         node->node.service_node.opt_ll_events = sc->opt_ll_events;
@@ -1173,6 +1303,8 @@ parse_node(Parser *p)
         }
         advance(p);
     }
+    DBG("Parsed node\n");
+    eat_whitespaces_and_comments(p);
     return node;
 }
 
@@ -1202,13 +1334,16 @@ parse(Parser *p)
     if (!ast)
     {
         error(p, "Expected at least one node");
+        return NULL;
     }
+    DBG("Parsed AST\n");
     return ast;
 }
 
 static Parser *
 create_parser(const char *input)
 {
+    DBG("Creating parser\n");
     assert(input);
     Parser *p = (Parser *)calloc(1, sizeof(Parser));
     assert(p);
