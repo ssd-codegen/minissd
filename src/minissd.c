@@ -825,6 +825,26 @@ parse_service(Parser *p)
             assert(dep);
 
             dep->opt_ll_attributes = attributes;
+
+            eat_whitespaces_and_comments(p);
+            char *on = parse_identifier(p);
+            if (!on || strcmp(on, "on") != 0)
+            {
+                error(p, "Expected 'on' keyword");
+                free(ident);
+                if (on)
+                {
+                    free(on);
+                }
+                free_dependencies(dep);
+                free_dependencies(dep_head);
+                free_handlers(handler_head);
+                free_events(event_head);
+                return NULL;
+            }
+            free(on);
+            eat_whitespaces_and_comments(p);
+
             dep->path = parse_path(p);
             if (!dep->path)
             {

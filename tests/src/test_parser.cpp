@@ -414,7 +414,7 @@ TEST_F(ParserTest, ValidInput_ServiceOneEventOneHandler)
 
 TEST_F(ParserTest, ValidInput_ServiceOneHandlerOneDependency)
 {
-    const char *source_code = "service MyService { fn some_function(); depends some::other::service; };";
+    const char *source_code = "service MyService { fn some_function(); depends on some::other::service; };";
 
     parser = minissd_create_parser(source_code);
     ast = minissd_parse(parser);
@@ -441,7 +441,7 @@ TEST_F(ParserTest, ValidInput_ServiceOneHandlerOneDependency)
 
 TEST_F(ParserTest, ValidInput_ServiceOneEventOneDependency)
 {
-    const char *source_code = "service MyService { event some_event(); depends some::other::service; };";
+    const char *source_code = "service MyService { event some_event(); depends on some::other::service; };";
 
     parser = minissd_create_parser(source_code);
     ast = minissd_parse(parser);
@@ -468,7 +468,7 @@ TEST_F(ParserTest, ValidInput_ServiceOneEventOneDependency)
 
 TEST_F(ParserTest, ValidInput_ServiceMultipleDependenciesEventsHandlers)
 {
-    const char *source_code = "service MyService { depends a::b::c ; depends d::e::f ; fn a(); fn b(); event c(); event d(); };";
+    const char *source_code = "service MyService { depends on a::b::c ; depends on d::e::f ; fn a(); fn b(); event c(); event d(); };";
 
     parser = minissd_create_parser(source_code);
     ast = minissd_parse(parser);
