@@ -97,7 +97,7 @@ int main(int argc, char **argv)
             printf("  Name: %s\n", minissd_get_enum_name(node));
             print_attributes(minissd_get_attributes(node));
 
-            for (EnumVariant const *value = minissd_get_enum_variants(node); value; value = minissd_get_next_enum_value(value))
+            for (EnumVariant const *value = minissd_get_enum_variants(node); value; value = minissd_get_next_enum_variant(value))
             {
                 bool has_value;
                 int val = minissd_get_enum_variant(value, &has_value);
