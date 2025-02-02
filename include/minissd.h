@@ -12,6 +12,21 @@
 #define MAX_TOKEN_SIZE 512
 #endif
 
+// DLL Export/Import Macros
+#ifdef _WIN32
+#ifdef MINISSD_SHARED
+#ifdef MINISSD_EXPORTS
+#define MINISSD_API __declspec(dllexport)
+#else
+#define MINISSD_API __declspec(dllimport)
+#endif
+#else
+#define MINISSD_API
+#endif
+#else
+#define MINISSD_API
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -137,136 +152,136 @@ extern "C"
     } Parser;
 
     // Parser creation and destruction
-    Parser *minissd_create_parser(const char *input);
+    MINISSD_API Parser *minissd_create_parser(const char *input);
     void minissd_free_parser(Parser *p);
 
     // Parsing function
-    AstNode *minissd_parse(Parser *p);
+    MINISSD_API AstNode *minissd_parse(Parser *p);
     void minissd_free_ast(AstNode *ast);
 
     // AST Node Accessors
-    NodeType const *
+    MINISSD_API NodeType const *
     minissd_get_node_type(AstNode const *node);
 
-    char const *
+    MINISSD_API char const *
     minissd_get_import_path(AstNode const *node);
 
-    char const *
+    MINISSD_API char const *
     minissd_get_data_name(AstNode const *node);
 
-    char const *
+    MINISSD_API char const *
     minissd_get_enum_name(AstNode const *node);
 
-    char const *
+    MINISSD_API char const *
     minissd_get_service_name(AstNode const *node);
 
-    Property const *
+    MINISSD_API Property const *
     minissd_get_properties(AstNode const *node);
 
-    EnumVariant const *
+    MINISSD_API EnumVariant const *
     minissd_get_enum_variants(AstNode const *node);
 
-    Dependency const *
+    MINISSD_API Dependency const *
     minissd_get_dependencies(AstNode const *node);
 
-    Handler const *
+    MINISSD_API Handler const *
     minissd_get_handlers(AstNode const *node);
 
-    Event const *
+    MINISSD_API Event const *
     minissd_get_events(AstNode const *node);
 
-    Attribute const *
+    MINISSD_API Attribute const *
     minissd_get_attributes(AstNode const *node);
 
-    AstNode const *
+    MINISSD_API AstNode const *
     minissd_get_next_node(AstNode const *node);
 
     // Handler Accessors
-    char const *
+    MINISSD_API char const *
     minissd_get_handler_name(Handler const *node);
 
-    char const *
+    MINISSD_API char const *
     minissd_get_handler_return_type(Handler const *handler);
 
-    Argument const *
+    MINISSD_API Argument const *
     minissd_get_handler_arguments(Handler const *node);
 
-    Handler const *
+    MINISSD_API Handler const *
     minissd_get_next_handler(Handler const *handler);
 
     // Event Accessors
-    char const *
+    MINISSD_API char const *
     minissd_get_event_name(Event const *event);
 
-    Argument const *
+    MINISSD_API Argument const *
     minissd_get_event_arguments(Event const *event);
 
-    Event const *
+    MINISSD_API Event const *
     minissd_get_next_event(Event const *event);
 
     // Dependency Accessors
-    char const *
+    MINISSD_API char const *
     minissd_get_dependency_path(Dependency const *dep);
 
-    Dependency const *
+    MINISSD_API Dependency const *
     minissd_get_next_dependency(Dependency const *dep);
 
     // Property Accessors
-    char const *
+    MINISSD_API char const *
     minissd_get_property_name(Property const *prop);
 
-    char const *
+    MINISSD_API char const *
     minissd_get_property_type(Property const *prop);
 
-    Attribute const *
+    MINISSD_API Attribute const *
     minissd_get_property_attributes(Property const *prop);
 
-    Property const *
+    MINISSD_API Property const *
     minissd_get_next_property(Property const *prop);
 
     // Enum Variant Accessors
-    char const *
+    MINISSD_API char const *
     minissd_get_enum_variant_name(EnumVariant const *value);
 
-    int minissd_get_enum_variant_value(EnumVariant const *value, bool *has_value);
+    MINISSD_API int minissd_get_enum_variant_value(EnumVariant const *value, bool *has_value);
 
-    Attribute const *
+    MINISSD_API Attribute const *
     minissd_get_enum_variant_attributes(EnumVariant const *value);
 
-    EnumVariant const *
+    MINISSD_API EnumVariant const *
     minissd_get_next_enum_variant(EnumVariant const *value);
 
     // Argument Accessors
-    char const *
+    MINISSD_API char const *
     minissd_get_argument_name(Argument const *prop);
 
-    char const *
+    MINISSD_API char const *
     minissd_get_argument_type(Argument const *prop);
 
-    Attribute const *
+    MINISSD_API Attribute const *
     minissd_get_argument_attributes(Argument const *prop);
 
-    Argument const *
+    MINISSD_API Argument const *
     minissd_get_next_argument(Argument const *arg);
 
     // Attribute Accessors
-    char const *
+    MINISSD_API char const *
     minissd_get_attribute_name(Attribute const *attr);
 
-    AttributeParameter const *
+    MINISSD_API AttributeParameter const *
     minissd_get_attribute_parameters(Attribute const *attr);
 
-    Attribute const *
+    MINISSD_API Attribute const *
     minissd_get_next_attribute(Attribute const *attr);
 
     // Attribute Parameter Accessors
-    char const *
+    MINISSD_API char const *
     minissd_get_attribute_parameter_name(AttributeParameter const *arg);
 
-    char const *
+    MINISSD_API char const *
     minissd_get_attribute_parameter_value(AttributeParameter const *arg);
 
-    AttributeParameter const *
+    MINISSD_API AttributeParameter const *
     minissd_get_next_attribute_parameter(AttributeParameter const *arg);
 
 #ifdef __cplusplus
