@@ -320,7 +320,7 @@ is_alphanumeric(char c)
 }
 
 static char *
-parse_path(Parser *p)
+parse_path(Parser *p, char const *context)
 {
     char buffer[MAX_TOKEN_SIZE + 1];
     int length = 0;
@@ -329,7 +329,16 @@ parse_path(Parser *p)
     {
         if (length == MAX_TOKEN_SIZE)
         {
-            error(p, "Path length exceeds maximum token size");
+            if (context)
+            {
+                char error_buffer[MAX_ERROR_SIZE + 1];
+                snprintf(error_buffer, MAX_ERROR_SIZE, "Path length exceeds maximum token size in context: %s", context);
+                error(p, error_buffer);
+            }
+            else
+            {
+                error(p, "Path length exceeds maximum token size");
+            }
             return NULL;
         }
 
@@ -339,7 +348,16 @@ parse_path(Parser *p)
     buffer[length] = '\0';
     if (length == 0)
     {
-        error(p, "Expected import path");
+        if (context)
+        {
+            char error_buffer[MAX_ERROR_SIZE + 1];
+            snprintf(error_buffer, MAX_ERROR_SIZE, "Expected path in context: %s", context);
+            error(p, error_buffer);
+        }
+        else
+        {
+            error(p, "Expected path");
+        }
         return NULL;
     }
     DBG("Path: %s\n", buffer);
@@ -347,7 +365,7 @@ parse_path(Parser *p)
 }
 
 static int *
-parse_int(Parser *p)
+parse_int(Parser *p, char const *context)
 {
     char buffer[MAX_TOKEN_SIZE + 1];
     int length = 0;
@@ -355,7 +373,16 @@ parse_int(Parser *p)
     {
         if (length == MAX_TOKEN_SIZE)
         {
-            error(p, "Integer length exceeds maximum token size");
+            if (context)
+            {
+                char error_buffer[MAX_ERROR_SIZE + 1];
+                snprintf(error_buffer, MAX_ERROR_SIZE, "Integer length exceeds maximum token size in context: %s", context);
+                error(p, error_buffer);
+            }
+            else
+            {
+                error(p, "Integer length exceeds maximum token size");
+            }
             return NULL;
         }
         buffer[length++] = p->current;
@@ -364,7 +391,16 @@ parse_int(Parser *p)
     buffer[length] = '\0';
     if (length == 0)
     {
-        error(p, "Expected integer");
+        if (context)
+        {
+            char error_buffer[MAX_ERROR_SIZE + 1];
+            snprintf(error_buffer, MAX_ERROR_SIZE, "Expected integer in context: %s", context);
+            error(p, error_buffer);
+        }
+        else
+        {
+            error(p, "Expected integer");
+        }
         return NULL;
     }
     int *value = (int *)malloc(sizeof(int));
@@ -375,11 +411,20 @@ parse_int(Parser *p)
 }
 
 static char *
-parse_string(Parser *p)
+parse_string(Parser *p, char const *context)
 {
     if (p->current != '"')
     {
-        error(p, "Expected string");
+        if (context)
+        {
+            char error_buffer[MAX_ERROR_SIZE + 1];
+            snprintf(error_buffer, MAX_ERROR_SIZE, "Expected string in context: %s", context);
+            error(p, error_buffer);
+        }
+        else
+        {
+            error(p, "Expected string");
+        }
         return NULL;
     }
     advance(p);
@@ -389,7 +434,16 @@ parse_string(Parser *p)
     {
         if (length == MAX_TOKEN_SIZE)
         {
-            error(p, "String length exceeds maximum token size");
+            if (context)
+            {
+                char error_buffer[MAX_ERROR_SIZE + 1];
+                snprintf(error_buffer, MAX_ERROR_SIZE, "String length exceeds maximum token size in context: %s", context);
+                error(p, error_buffer);
+            }
+            else
+            {
+                error(p, "String length exceeds maximum token size");
+            }
             return NULL;
         }
         buffer[length++] = p->current;
@@ -397,7 +451,16 @@ parse_string(Parser *p)
     }
     if (p->current != '"')
     {
-        error(p, "Unterminated string");
+        if (context)
+        {
+            char error_buffer[MAX_ERROR_SIZE + 1];
+            snprintf(error_buffer, MAX_ERROR_SIZE, "Unterminated string in context: %s", context);
+            error(p, error_buffer);
+        }
+        else
+        {
+            error(p, "Unterminated string");
+        }
         return NULL;
     }
     advance(p);
@@ -415,7 +478,16 @@ parse_identifier(Parser *p, char const *context)
     {
         if (length == MAX_TOKEN_SIZE)
         {
-            error(p, "Identifier length exceeds maximum token size");
+            if (context)
+            {
+                char error_buffer[MAX_ERROR_SIZE + 1];
+                snprintf(error_buffer, MAX_ERROR_SIZE, "Identifier length exceeds maximum token size in context: %s", context);
+                error(p, error_buffer);
+            }
+            else
+            {
+                error(p, "Identifier length exceeds maximum token size");
+            }
             return NULL;
         }
         buffer[length++] = p->current;
@@ -441,7 +513,7 @@ parse_identifier(Parser *p, char const *context)
 }
 
 static Attribute *
-parse_attributes(Parser *p)
+parse_attributes(Parser *p, char const *context)
 {
     DBG("Try parsing attributes\n");
     Attribute *head = NULL, *tail = NULL;
@@ -466,7 +538,7 @@ parse_attributes(Parser *p)
             assert(attr);
 
             eat_whitespaces_and_comments(p);
-            attr->name = parse_identifier(p, CTX("attributes"));
+            attr->name = parse_path(p, CTX("attributes"));
             DBG("Attribute name: %s\n", attr->name);
             if (!attr->name)
             {
@@ -508,7 +580,7 @@ parse_attributes(Parser *p)
                         advance(p);
                         DBG("Parsing attribute parameter value\n");
                         eat_whitespaces_and_comments(p);
-                        arg->opt_value = parse_string(p);
+                        arg->opt_value = parse_string(p, CTX("attribute arguments"));
                         if (!arg->opt_value)
                         {
                             free_attribute_parameters(arg);
@@ -607,7 +679,7 @@ parse_enum_variants(Parser *p)
         assert(ev);
 
         eat_whitespaces_and_comments(p);
-        ev->attributes = parse_attributes(p);
+        ev->attributes = parse_attributes(p, CTX("enum variant"));
         if (ev->attributes)
         {
             DBG("Found attributes\n");
@@ -630,7 +702,7 @@ parse_enum_variants(Parser *p)
             DBG("Parsing enum variant value\n");
 
             eat_whitespaces_and_comments(p);
-            ev->opt_value = parse_int(p);
+            ev->opt_value = parse_int(p, CTX("enum variant"));
             if (!ev->opt_value)
             {
                 free_enum_variants(ev);
@@ -699,7 +771,7 @@ parse_properties(Parser *p)
         assert(prop);
 
         eat_whitespaces_and_comments(p);
-        prop->attributes = parse_attributes(p);
+        prop->attributes = parse_attributes(p, CTX("property"));
         if (prop->attributes)
         {
             DBG("Found attributes\n");
@@ -786,7 +858,7 @@ parse_handler_arguments(Parser *p)
         Argument *arg = (Argument *)calloc(1, sizeof(Argument));
         assert(arg);
         eat_whitespaces_and_comments(p);
-        arg->attributes = parse_attributes(p);
+        arg->attributes = parse_attributes(p, CTX("handler argument"));
         if (arg->attributes)
         {
             DBG("Found attributes\n");
@@ -880,7 +952,7 @@ parse_service(Parser *p)
     {
         DBG("Parsing service component\n");
         eat_whitespaces_and_comments(p);
-        Attribute *attributes = parse_attributes(p);
+        Attribute *attributes = parse_attributes(p, CTX("service component"));
         if (attributes)
         {
             DBG("Found attributes\n");
@@ -927,7 +999,7 @@ parse_service(Parser *p)
             eat_whitespaces_and_comments(p);
             DBG("Parsing dependency path\n");
 
-            dep->path = parse_path(p);
+            dep->path = parse_path(p, CTX("dependency"));
             if (!dep->path)
             {
                 error(p, "Expected dependency path");
@@ -1157,7 +1229,7 @@ parse_node(Parser *p)
 {
     DBG("Parsing node\n");
     eat_whitespaces_and_comments(p);
-    Attribute *attributes = parse_attributes(p);
+    Attribute *attributes = parse_attributes(p, CTX("node"));
     if (attributes)
     {
         DBG("Found attributes\n");
@@ -1180,7 +1252,7 @@ parse_node(Parser *p)
     {
         DBG("Parsing import\n");
         node->type = NODE_IMPORT;
-        node->node.import_node.path = parse_path(p);
+        node->node.import_node.path = parse_path(p, CTX("import"));
         if (!node->node.import_node.path)
         {
             error(p, "Expected import path");
