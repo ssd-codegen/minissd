@@ -146,7 +146,7 @@ extern "C"
         size_t input_length;
         char error[MAX_ERROR_SIZE];
         char current;
-        int index;
+        size_t index;
         int line;
         int column;
     } Parser;
