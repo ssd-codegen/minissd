@@ -32,7 +32,7 @@ data MyData {
 service MyService {
 
 	#[d(e="f")]
-	depends a::b::c ;
+	depends on a::b::c ;
 	#[g(h="i")]
 	fn asdf ( blah : int )   ->   out   ;
 
