@@ -50,6 +50,8 @@ extern "C"
         Attribute *attributes;
         char *name;
         char *type;
+        bool is_list;
+        int *count; // Nullable
         struct Property *next;
     } Property;
 
@@ -232,6 +234,12 @@ extern "C"
 
     MINISSD_API char const *
     minissd_get_property_type(Property const *prop);
+
+    MINISSD_API bool
+    minissd_get_property_is_list(Property const *prop);
+
+    MINISSD_API int const *
+    minissd_get_property_count(Property const *prop);
 
     MINISSD_API Attribute const *
     minissd_get_property_attributes(Property const *prop);
