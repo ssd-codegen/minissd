@@ -87,7 +87,22 @@ int main(int argc, char **argv)
 
             for (Property const *prop = minissd_get_properties(node); prop; prop = minissd_get_next_property(prop))
             {
-                printf("  Property: %s : %s\n", minissd_get_property_name(prop), minissd_get_property_type(prop));
+                if (minissd_get_property_is_list(prop))
+                {
+                    int const *count = minissd_get_property_count(prop);
+                    if (count)
+                    {
+                        printf("  Property: %s : %d of %s\n", minissd_get_property_name(prop), *count, minissd_get_property_type(prop));
+                    }
+                    else
+                    {
+                        printf("  Property: %s : List of %s\n", minissd_get_property_name(prop), minissd_get_property_type(prop));
+                    }
+                }
+                else
+                {
+                    printf("  Property: %s : %s\n", minissd_get_property_name(prop), minissd_get_property_type(prop));
+                }
                 print_attributes(prop->attributes);
             }
             break;

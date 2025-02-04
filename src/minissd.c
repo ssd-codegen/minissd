@@ -113,6 +113,10 @@ free_properties(Property *prop)
         {
             free(current->type);
         }
+        if (current->count)
+        {
+            free(current->count);
+        }
         free_attributes(current->attributes);
         Property *outer_next = current->next;
         free(current);
@@ -249,6 +253,16 @@ static void
 error(Parser *p, const char *message)
 {
     snprintf(p->error, MAX_ERROR_SIZE, "Error: %s at line %d, column %d", message, p->line, p->column);
+}
+
+static void
+set_index(Parser *p, size_t index)
+{
+    if (index < p->input_length)
+    {
+        p->index = index;
+        p->current = p->input[index];
+    }
 }
 
 static char
@@ -799,7 +813,54 @@ parse_properties(Parser *p)
         DBG("Parsing property type\n");
 
         eat_whitespaces_and_comments(p);
-        prop->type = parse_identifier(p, CTX("property type"));
+
+        size_t pos = p->index;
+
+        char *list_ident = parse_identifier(p, CTX("property type 1"));
+        if (strcmp(list_ident, "list") == 0)
+        {
+            prop->is_list = true;
+            char *of_ident = parse_identifier(p, CTX("property type 2"));
+            if (strcmp(of_ident, "of") != 0)
+            {
+                error(p, "Expected 'of' after 'list'");
+                free(of_ident);
+                free(list_ident);
+                free_properties(prop);
+                free_properties(head);
+                return NULL;
+            }
+            free(of_ident);
+        }
+        else
+        {
+            set_index(p, pos);
+        }
+        free(list_ident);
+
+        int *number = parse_int(p, CTX("property type 1"));
+        if (number)
+        {
+            prop->is_list = true;
+            prop->count = number;
+            char *of_ident = parse_identifier(p, CTX("property type 2"));
+            if (strcmp(of_ident, "of") != 0)
+            {
+                error(p, "Expected 'of' after 'list'");
+                free(of_ident);
+                free_properties(prop);
+                free_properties(head);
+                return NULL;
+            }
+            free(of_ident);
+        }
+        else
+        {
+            set_index(p, pos);
+        }
+
+        prop
+            ->type = parse_path(p, CTX("property type"));
         if (!prop->type)
         {
             free_properties(prop);
@@ -1523,6 +1584,17 @@ char const *
 minissd_get_property_name(Property const *prop)
 {
     return prop ? prop->name : NULL;
+}
+
+bool minissd_get_property_is_list(Property const *prop)
+{
+    return prop ? prop->is_list : false;
+}
+
+int const *
+minissd_get_property_count(Property const *prop)
+{
+    return prop ? prop->count : NULL;
 }
 
 Attribute const *
