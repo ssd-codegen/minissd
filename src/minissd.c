@@ -20,19 +20,19 @@
 #endif
 
 #define CHECKED_DECLARE(type, obj, func) \
-    type obj = func(p);                  \
-    if (!obj)                            \
-    {                                    \
-        return NULL;                     \
-    }
+	type obj = func(p);                  \
+	if (!obj)                            \
+	{                                    \
+		return NULL;                     \
+	}
 
-static char*
-strdup_c99(const char* s)
+static char *
+strdup_c99(const char *s)
 {
 	assert(s);
 
 	size_t len = strlen(s) + 1;
-	char* dup = (char*)malloc(len);
+	char *dup = (char *)malloc(len);
 	assert(dup);
 
 	memcpy(dup, s, len);
@@ -42,9 +42,9 @@ strdup_c99(const char* s)
 
 // Free functions
 static void
-free_attribute_parameters(AttributeParameter* args)
+free_attribute_parameters(AttributeParameter *args)
 {
-	AttributeParameter* current = args;
+	AttributeParameter *current = args;
 	while (current)
 	{
 		if (current->key)
@@ -55,16 +55,16 @@ free_attribute_parameters(AttributeParameter* args)
 		{
 			free(current->opt_value);
 		}
-		AttributeParameter* next = current->next;
+		AttributeParameter *next = current->next;
 		free(current);
 		current = next;
 	};
 }
 
 static void
-free_attributes(Attribute* attrs)
+free_attributes(Attribute *attrs)
 {
-	Attribute* current_attr = attrs;
+	Attribute *current_attr = attrs;
 	while (current_attr)
 	{
 		if (current_attr->name)
@@ -72,16 +72,16 @@ free_attributes(Attribute* attrs)
 			free(current_attr->name);
 		}
 		free_attribute_parameters(current_attr->opt_ll_arguments);
-		Attribute* next_attr = current_attr->next;
+		Attribute *next_attr = current_attr->next;
 		free(current_attr);
 		current_attr = next_attr;
 	};
 }
 
 static void
-free_arguments(Argument* args)
+free_arguments(Argument *args)
 {
-	Argument* current = args;
+	Argument *current = args;
 	while (current)
 	{
 		if (current->name)
@@ -93,16 +93,16 @@ free_arguments(Argument* args)
 			free(current->type);
 		}
 		free_attributes(current->attributes);
-		Argument* next = current->next;
+		Argument *next = current->next;
 		free(current);
 		current = next;
 	};
 }
 
 static void
-free_properties(Property* prop)
+free_properties(Property *prop)
 {
-	Property* current = prop;
+	Property *current = prop;
 	while (current)
 	{
 		if (current->name)
@@ -118,16 +118,16 @@ free_properties(Property* prop)
 			free(current->count);
 		}
 		free_attributes(current->attributes);
-		Property* outer_next = current->next;
+		Property *outer_next = current->next;
 		free(current);
 		current = outer_next;
 	};
 }
 
 static void
-free_enum_variants(EnumVariant* variants)
+free_enum_variants(EnumVariant *variants)
 {
-	EnumVariant* current = variants;
+	EnumVariant *current = variants;
 	while (current)
 	{
 		if (current->name)
@@ -139,16 +139,16 @@ free_enum_variants(EnumVariant* variants)
 			free(current->opt_value);
 		}
 		free_attributes(current->attributes);
-		EnumVariant* next = current->next;
+		EnumVariant *next = current->next;
 		free(current);
 		current = next;
 	};
 }
 
 static void
-free_dependencies(Dependency* deps)
+free_dependencies(Dependency *deps)
 {
-	Dependency* current = deps;
+	Dependency *current = deps;
 	while (current)
 	{
 		if (current->path)
@@ -156,15 +156,15 @@ free_dependencies(Dependency* deps)
 			free(current->path);
 		}
 		free_attributes(current->opt_ll_attributes);
-		Dependency* next = current->next;
+		Dependency *next = current->next;
 		free(current);
 		current = next;
 	};
 }
 static void
-free_handlers(Handler* handlers)
+free_handlers(Handler *handlers)
 {
-	Handler* current = handlers;
+	Handler *current = handlers;
 	while (current)
 	{
 		if (current->name)
@@ -177,16 +177,16 @@ free_handlers(Handler* handlers)
 		}
 		free_attributes(current->opt_ll_attributes);
 		free_arguments(current->opt_ll_arguments);
-		Handler* next = current->next;
+		Handler *next = current->next;
 		free(current);
 		current = next;
 	};
 }
 
 static void
-free_events(Event* events)
+free_events(Event *events)
 {
-	Event* current = events;
+	Event *current = events;
 	while (current)
 	{
 		if (current->name)
@@ -195,16 +195,16 @@ free_events(Event* events)
 		}
 		free_attributes(current->opt_ll_attributes);
 		free_arguments(current->opt_ll_arguments);
-		Event* next = current->next;
+		Event *next = current->next;
 		free(current);
 		current = next;
 	};
 }
 
 static void
-free_ast(AstNode* ast)
+free_ast(AstNode *ast)
 {
-	AstNode* current = ast;
+	AstNode *current = ast;
 	while (current)
 	{
 		free_attributes(current->opt_ll_attributes);
@@ -242,7 +242,7 @@ free_ast(AstNode* ast)
 		default:
 			break;
 		}
-		AstNode* next = current->next;
+		AstNode *next = current->next;
 		current->next = NULL;
 		free(current);
 		current = next;
@@ -250,13 +250,13 @@ free_ast(AstNode* ast)
 }
 
 static void
-error(Parser* p, const char* message)
+error(Parser *p, const char *message)
 {
 	snprintf(p->error, MAX_ERROR_SIZE, "Error: %s at line %d, column %d", message, p->line, p->column);
 }
 
 static char
-peek(const Parser* p)
+peek(const Parser *p)
 {
 	if (p->index < p->input_length)
 	{
@@ -265,7 +265,7 @@ peek(const Parser* p)
 	return '\0';
 }
 
-void debug(const Parser* p)
+void debug(const Parser *p)
 {
 	printf("Current: %c\n", p->current);
 	printf("Next: %c\n", peek(p));
@@ -275,7 +275,7 @@ void debug(const Parser* p)
 }
 
 static void
-advance(Parser* p)
+advance(Parser *p)
 {
 	if (p->input[p->index] == '\0')
 	{
@@ -295,7 +295,7 @@ advance(Parser* p)
 }
 
 static void
-eat_whitespaces_and_comments(Parser* p)
+eat_whitespaces_and_comments(Parser *p)
 {
 	DBG("Try eating whitespaces and comments\n");
 	bool comment = true;
@@ -323,8 +323,8 @@ is_alphanumeric(char c)
 	return isalnum(c) || c == '_';
 }
 
-static char*
-parse_path(Parser* p, char const* context)
+static char *
+parse_path(Parser *p, char const *context)
 {
 	char buffer[MAX_TOKEN_SIZE + 1];
 	int length = 0;
@@ -368,8 +368,8 @@ parse_path(Parser* p, char const* context)
 	return strdup_c99(buffer);
 }
 
-static int*
-parse_int(Parser* p, char const* context)
+static int *
+parse_int(Parser *p, char const *context)
 {
 	char buffer[MAX_TOKEN_SIZE + 1];
 	int length = 0;
@@ -407,15 +407,15 @@ parse_int(Parser* p, char const* context)
 		}
 		return NULL;
 	}
-	int* value = (int*)malloc(sizeof(int));
+	int *value = (int *)malloc(sizeof(int));
 	assert(value);
 	*value = atoi(buffer);
 	DBG("Integer: %d\n", *value);
 	return value;
 }
 
-static char*
-parse_string(Parser* p, char const* context)
+static char *
+parse_string(Parser *p, char const *context)
 {
 	if (p->current != '"')
 	{
@@ -473,8 +473,8 @@ parse_string(Parser* p, char const* context)
 	return strdup_c99(buffer);
 }
 
-static char*
-parse_identifier(Parser* p, char const* context)
+static char *
+parse_identifier(Parser *p, char const *context)
 {
 	char buffer[MAX_TOKEN_SIZE + 1];
 	int length = 0;
@@ -516,11 +516,11 @@ parse_identifier(Parser* p, char const* context)
 	return strdup_c99(buffer);
 }
 
-static Attribute*
-parse_attributes(Parser* p, char const* context)
+static Attribute *
+parse_attributes(Parser *p, char const *context)
 {
 	DBG("Try parsing attributes\n");
-	Attribute* head = NULL, * tail = NULL;
+	Attribute *head = NULL, *tail = NULL;
 	eat_whitespaces_and_comments(p);
 	while (p->current == '#')
 	{
@@ -538,7 +538,7 @@ parse_attributes(Parser* p, char const* context)
 		eat_whitespaces_and_comments(p);
 		while (p->current != ']')
 		{
-			Attribute* attr = (Attribute*)calloc(1, sizeof(Attribute));
+			Attribute *attr = (Attribute *)calloc(1, sizeof(Attribute));
 			assert(attr);
 
 			eat_whitespaces_and_comments(p);
@@ -555,13 +555,13 @@ parse_attributes(Parser* p, char const* context)
 			if (p->current == '(')
 			{
 				advance(p);
-				AttributeParameter* arg_head = NULL, * arg_tail = NULL;
+				AttributeParameter *arg_head = NULL, *arg_tail = NULL;
 				DBG("Parsing attribute parameters\n");
 
 				eat_whitespaces_and_comments(p);
 				while (p->current != ')')
 				{
-					AttributeParameter* arg = (AttributeParameter*)calloc(1, sizeof(AttributeParameter));
+					AttributeParameter *arg = (AttributeParameter *)calloc(1, sizeof(AttributeParameter));
 					assert(arg);
 
 					DBG("Parsing attribute parameter\n");
@@ -662,8 +662,8 @@ parse_attributes(Parser* p, char const* context)
 	return head;
 }
 
-static EnumVariant*
-parse_enum_variants(Parser* p)
+static EnumVariant *
+parse_enum_variants(Parser *p)
 {
 	DBG("Try parsing enum variants\n");
 	if (p->current != '{')
@@ -673,13 +673,13 @@ parse_enum_variants(Parser* p)
 	}
 	advance(p);
 
-	EnumVariant* head = NULL, * tail = NULL;
+	EnumVariant *head = NULL, *tail = NULL;
 
 	eat_whitespaces_and_comments(p);
 	while (p->current != '}')
 	{
 		DBG("Parsing enum variant\n");
-		EnumVariant* ev = (EnumVariant*)calloc(1, sizeof(EnumVariant));
+		EnumVariant *ev = (EnumVariant *)calloc(1, sizeof(EnumVariant));
 		assert(ev);
 
 		eat_whitespaces_and_comments(p);
@@ -753,8 +753,8 @@ parse_enum_variants(Parser* p)
 	return head;
 }
 
-static Property*
-parse_properties(Parser* p)
+static Property *
+parse_properties(Parser *p)
 {
 	DBG("Try parsing properties\n");
 	if (p->current != '{')
@@ -764,14 +764,14 @@ parse_properties(Parser* p)
 	}
 	advance(p);
 
-	Property* head = NULL, * tail = NULL;
+	Property *head = NULL, *tail = NULL;
 
 	eat_whitespaces_and_comments(p);
 	while (p->current != '}')
 	{
 		DBG("Parsing property\n");
 
-		Property* prop = (Property*)calloc(1, sizeof(Property));
+		Property *prop = (Property *)calloc(1, sizeof(Property));
 		assert(prop);
 
 		eat_whitespaces_and_comments(p);
@@ -809,12 +809,12 @@ parse_properties(Parser* p)
 		int old_line = p->line;
 		int old_column = p->line;
 
-		char* list_ident = parse_identifier(p, CTX("property type 1"));
+		char *list_ident = parse_identifier(p, CTX("property type 1"));
 		if (strcmp(list_ident, "list") == 0)
 		{
 			eat_whitespaces_and_comments(p);
 			prop->is_list = true;
-			char* of_ident = parse_identifier(p, CTX("property type 2"));
+			char *of_ident = parse_identifier(p, CTX("property type 2"));
 			if (!of_ident || strcmp(of_ident, "of") != 0)
 			{
 				error(p, "Expected 'of' after 'list'");
@@ -841,13 +841,13 @@ parse_properties(Parser* p)
 
 		if (!prop->is_list)
 		{
-			int* number = parse_int(p, CTX("property type 1"));
+			int *number = parse_int(p, CTX("property type 1"));
 			if (number)
 			{
 				eat_whitespaces_and_comments(p);
 				prop->is_list = true;
 				prop->count = number;
-				char* of_ident = parse_identifier(p, CTX("property type 2"));
+				char *of_ident = parse_identifier(p, CTX("property type 2"));
 				if (!of_ident || strcmp(of_ident, "of") != 0)
 				{
 					error(p, "Expected 'of' after 'list'");
@@ -902,7 +902,6 @@ parse_properties(Parser* p)
 	}
 
 	eat_whitespaces_and_comments(p);
-	debug(p);
 	if (p->current != '}')
 	{
 		error(p, "Expected ',' after property");
@@ -921,15 +920,15 @@ parse_properties(Parser* p)
 	return head;
 }
 
-static Argument*
-parse_handler_arguments(Parser* p)
+static Argument *
+parse_handler_arguments(Parser *p)
 {
 	DBG("Try parsing handler arguments\n");
-	Argument* head = NULL, * tail = NULL;
+	Argument *head = NULL, *tail = NULL;
 	while (p->current != ')')
 	{
 		DBG("Parsing handler argument\n");
-		Argument* arg = (Argument*)calloc(1, sizeof(Argument));
+		Argument *arg = (Argument *)calloc(1, sizeof(Argument));
 		assert(arg);
 		eat_whitespaces_and_comments(p);
 		arg->attributes = parse_attributes(p, CTX("handler argument"));
@@ -993,13 +992,13 @@ parse_handler_arguments(Parser* p)
 
 typedef struct ServiceComponents
 {
-	Handler* opt_ll_handlers;
-	Dependency* opt_ll_dependencies;
-	Event* opt_ll_events;
+	Handler *opt_ll_handlers;
+	Dependency *opt_ll_dependencies;
+	Event *opt_ll_events;
 } ServiceComponents;
 
 static void
-free_service_components(ServiceComponents* sc)
+free_service_components(ServiceComponents *sc)
 {
 	free_handlers(sc->opt_ll_handlers);
 	free_dependencies(sc->opt_ll_dependencies);
@@ -1007,8 +1006,8 @@ free_service_components(ServiceComponents* sc)
 	free(sc);
 }
 
-static ServiceComponents*
-parse_service(Parser* p)
+static ServiceComponents *
+parse_service(Parser *p)
 {
 	DBG("Try parsing service\n");
 	if (p->current != '{')
@@ -1018,21 +1017,21 @@ parse_service(Parser* p)
 	}
 	advance(p);
 
-	Handler* handler_head = NULL, * handler_tail = NULL;
-	Dependency* dep_head = NULL, * dep_tail = NULL;
-	Event* event_head = NULL, * event_tail = NULL;
+	Handler *handler_head = NULL, *handler_tail = NULL;
+	Dependency *dep_head = NULL, *dep_tail = NULL;
+	Event *event_head = NULL, *event_tail = NULL;
 
 	while (p->current != '}')
 	{
 		DBG("Parsing service component\n");
 		eat_whitespaces_and_comments(p);
-		Attribute* attributes = parse_attributes(p, CTX("service component"));
+		Attribute *attributes = parse_attributes(p, CTX("service component"));
 		if (attributes)
 		{
 			DBG("Found attributes\n");
 		}
 		eat_whitespaces_and_comments(p);
-		char* ident = parse_identifier(p, CTX("service component"));
+		char *ident = parse_identifier(p, CTX("service component"));
 		if (!ident)
 		{
 			error(p, "Expected 'depends' or 'fn' keyword");
@@ -1048,13 +1047,13 @@ parse_service(Parser* p)
 		if (strcmp(ident, "depends") == 0)
 		{
 			DBG("Parsing dependency\n");
-			Dependency* dep = (Dependency*)calloc(1, sizeof(Dependency));
+			Dependency *dep = (Dependency *)calloc(1, sizeof(Dependency));
 			assert(dep);
 
 			dep->opt_ll_attributes = attributes;
 
 			eat_whitespaces_and_comments(p);
-			char* on = parse_identifier(p, CTX("dependency"));
+			char *on = parse_identifier(p, CTX("dependency"));
 			if (!on || strcmp(on, "on") != 0)
 			{
 				error(p, "Expected 'on' keyword");
@@ -1099,7 +1098,7 @@ parse_service(Parser* p)
 		else if (strcmp(ident, "fn") == 0)
 		{
 			DBG("Parsing handler\n");
-			Handler* handler = (Handler*)calloc(1, sizeof(Handler));
+			Handler *handler = (Handler *)calloc(1, sizeof(Handler));
 			assert(handler);
 
 			handler->opt_ll_attributes = attributes;
@@ -1193,7 +1192,7 @@ parse_service(Parser* p)
 		else if (strcmp(ident, "event") == 0)
 		{
 			DBG("Parsing event\n");
-			Event* event = (Event*)calloc(1, sizeof(Event));
+			Event *event = (Event *)calloc(1, sizeof(Event));
 			assert(event);
 			event->opt_ll_attributes = attributes;
 
@@ -1291,33 +1290,33 @@ parse_service(Parser* p)
 
 	DBG("Parsed service\n");
 
-	ServiceComponents* sc = (ServiceComponents*)calloc(1, sizeof(ServiceComponents));
+	ServiceComponents *sc = (ServiceComponents *)calloc(1, sizeof(ServiceComponents));
 	sc->opt_ll_handlers = handler_head;
 	sc->opt_ll_dependencies = dep_head;
 	sc->opt_ll_events = event_head;
 	return sc;
 }
 
-static AstNode*
-parse_node(Parser* p)
+static AstNode *
+parse_node(Parser *p)
 {
 	DBG("Parsing node\n");
 	eat_whitespaces_and_comments(p);
-	Attribute* attributes = parse_attributes(p, CTX("node"));
+	Attribute *attributes = parse_attributes(p, CTX("node"));
 	if (attributes)
 	{
 		DBG("Found attributes\n");
 	}
 
 	eat_whitespaces_and_comments(p);
-	char* ident = parse_identifier(p, CTX("node"));
+	char *ident = parse_identifier(p, CTX("node"));
 	if (!ident)
 	{
 		free_attributes(attributes);
 		return NULL;
 	};
 	DBG("Node type: %s\n", ident);
-	AstNode* node = (AstNode*)calloc(1, sizeof(AstNode));
+	AstNode *node = (AstNode *)calloc(1, sizeof(AstNode));
 	assert(node);
 
 	eat_whitespaces_and_comments(p);
@@ -1396,7 +1395,7 @@ parse_node(Parser* p)
 		};
 		DBG("Service name: %s\n", node->node.service_node.name);
 		eat_whitespaces_and_comments(p);
-		ServiceComponents* sc = parse_service(p);
+		ServiceComponents *sc = parse_service(p);
 		if (!sc)
 		{
 			free(ident);
@@ -1454,14 +1453,14 @@ parse_node(Parser* p)
 	return node;
 }
 
-static AstNode*
-parse(Parser* p)
+static AstNode *
+parse(Parser *p)
 {
 	advance(p);
-	AstNode* ast = NULL, * last = NULL;
+	AstNode *ast = NULL, *last = NULL;
 	while (p->current != '\0')
 	{
-		AstNode* node = parse_node(p);
+		AstNode *node = parse_node(p);
 		if (!node)
 		{
 			free_ast(ast);
@@ -1486,12 +1485,12 @@ parse(Parser* p)
 	return ast;
 }
 
-static Parser*
-create_parser(const char* input)
+static Parser *
+create_parser(const char *input)
 {
 	DBG("Creating parser\n");
 	assert(input);
-	Parser* p = (Parser*)calloc(1, sizeof(Parser));
+	Parser *p = (Parser *)calloc(1, sizeof(Parser));
 	assert(p);
 	p->input = input;
 	p->input_length = strlen(input);
@@ -1501,165 +1500,165 @@ create_parser(const char* input)
 }
 
 // Parser functions
-Parser*
-minissd_create_parser(const char* input)
+Parser *
+minissd_create_parser(const char *input)
 {
 	return create_parser(input);
 }
 
-void minissd_free_parser(Parser* p)
+void minissd_free_parser(Parser *p)
 {
 	free(p);
 }
 
 // Parsing
-AstNode*
-minissd_parse(Parser* p)
+AstNode *
+minissd_parse(Parser *p)
 {
 	return parse(p);
 }
 
-void minissd_free_ast(AstNode* ast)
+void minissd_free_ast(AstNode *ast)
 {
 	free_ast(ast);
 }
 
 // AST Node accessors
-NodeType const*
-minissd_get_node_type(AstNode const* node)
+NodeType const *
+minissd_get_node_type(AstNode const *node)
 {
 	return node ? &node->type : NULL;
 }
 
-char const*
-minissd_get_import_path(AstNode const* node)
+char const *
+minissd_get_import_path(AstNode const *node)
 {
 	return (node && node->type == NODE_IMPORT) ? node->node.import_node.path : NULL;
 }
 
-char const*
-minissd_get_data_name(AstNode const* node)
+char const *
+minissd_get_data_name(AstNode const *node)
 {
 	return (node && node->type == NODE_DATA) ? node->node.data_node.name : NULL;
 }
 
-char const*
-minissd_get_enum_name(AstNode const* node)
+char const *
+minissd_get_enum_name(AstNode const *node)
 {
 	return (node && node->type == NODE_ENUM) ? node->node.enum_node.name : NULL;
 }
 
-char const*
-minissd_get_handler_name(Handler const* handler)
+char const *
+minissd_get_handler_name(Handler const *handler)
 {
 	return (handler) ? handler->name : NULL;
 }
 
-char const*
-minissd_get_handler_return_type(Handler const* handler)
+char const *
+minissd_get_handler_return_type(Handler const *handler)
 {
 	return (handler) ? handler->opt_return_type : NULL;
 }
 
-char const*
-minissd_get_event_name(Event const* event)
+char const *
+minissd_get_event_name(Event const *event)
 {
 	return (event) ? event->name : NULL;
 }
 
 // Attribute accessors
-Attribute const*
-minissd_get_attributes(AstNode const* node)
+Attribute const *
+minissd_get_attributes(AstNode const *node)
 {
 	return node ? node->opt_ll_attributes : NULL;
 }
 
-char const*
-minissd_get_attribute_name(Attribute const* attr)
+char const *
+minissd_get_attribute_name(Attribute const *attr)
 {
 	return attr ? attr->name : NULL;
 }
 
-AttributeParameter const*
-minissd_get_attribute_parameters(Attribute const* attr)
+AttributeParameter const *
+minissd_get_attribute_parameters(Attribute const *attr)
 {
 	return attr ? attr->opt_ll_arguments : NULL;
 }
 
 // Property accessors
-Property const*
-minissd_get_properties(AstNode const* node)
+Property const *
+minissd_get_properties(AstNode const *node)
 {
 	return (node && node->type == NODE_DATA) ? node->node.data_node.ll_properties : NULL;
 }
 
-char const*
-minissd_get_property_name(Property const* prop)
+char const *
+minissd_get_property_name(Property const *prop)
 {
 	return prop ? prop->name : NULL;
 }
 
-bool minissd_get_property_is_list(Property const* prop)
+bool minissd_get_property_is_list(Property const *prop)
 {
 	return prop ? prop->is_list : false;
 }
 
-int const*
-minissd_get_property_count(Property const* prop)
+int const *
+minissd_get_property_count(Property const *prop)
 {
 	return prop ? prop->count : NULL;
 }
 
-Attribute const*
-minissd_get_property_attributes(Property const* prop)
+Attribute const *
+minissd_get_property_attributes(Property const *prop)
 {
 	return prop ? prop->attributes : NULL;
 }
 
-char const*
-minissd_get_property_type(Property const* prop)
+char const *
+minissd_get_property_type(Property const *prop)
 {
 	return prop ? prop->type : NULL;
 }
 
-Dependency const*
-minissd_get_dependencies(AstNode const* node)
+Dependency const *
+minissd_get_dependencies(AstNode const *node)
 {
 	return (node && node->type == NODE_SERVICE) ? node->node.service_node.opt_ll_dependencies : NULL;
 }
 
-Handler const*
-minissd_get_handlers(AstNode const* node)
+Handler const *
+minissd_get_handlers(AstNode const *node)
 {
 	return (node && node->type == NODE_SERVICE) ? node->node.service_node.opt_ll_handlers : NULL;
 }
 
-Event const*
-minissd_get_events(AstNode const* node)
+Event const *
+minissd_get_events(AstNode const *node)
 {
 	return (node && node->type == NODE_SERVICE) ? node->node.service_node.opt_ll_events : NULL;
 }
 
 // Enum Value accessors
-EnumVariant const*
-minissd_get_enum_variants(AstNode const* node)
+EnumVariant const *
+minissd_get_enum_variants(AstNode const *node)
 {
 	return (node && node->type == NODE_ENUM) ? node->node.enum_node.ll_variants : NULL;
 }
 
-char const*
-minissd_get_enum_variant_name(EnumVariant const* value)
+char const *
+minissd_get_enum_variant_name(EnumVariant const *value)
 {
 	return value ? value->name : NULL;
 }
 
-Attribute const*
-minissd_get_enum_variant_attributes(EnumVariant const* value)
+Attribute const *
+minissd_get_enum_variant_attributes(EnumVariant const *value)
 {
 	return value ? value->attributes : NULL;
 }
 
-int minissd_get_enum_variant_value(EnumVariant const* value, bool* has_value)
+int minissd_get_enum_variant_value(EnumVariant const *value, bool *has_value)
 {
 	if (!value || !value->opt_value)
 	{
@@ -1676,109 +1675,109 @@ int minissd_get_enum_variant_value(EnumVariant const* value, bool* has_value)
 	return *(value->opt_value);
 }
 
-Argument const*
-minissd_get_handler_arguments(Handler const* handler)
+Argument const *
+minissd_get_handler_arguments(Handler const *handler)
 {
 	return (handler) ? handler->opt_ll_arguments : NULL;
 }
 
-Argument const*
-minissd_get_event_arguments(Event const* event)
+Argument const *
+minissd_get_event_arguments(Event const *event)
 {
 	return (event) ? event->opt_ll_arguments : NULL;
 }
 
-char const*
-minissd_get_argument_name(Argument const* arg)
+char const *
+minissd_get_argument_name(Argument const *arg)
 {
 	return arg ? arg->name : NULL;
 }
-Attribute const*
-minissd_get_argument_attributes(Argument const* arg)
+Attribute const *
+minissd_get_argument_attributes(Argument const *arg)
 {
 	return arg ? arg->attributes : NULL;
 }
-char const*
-minissd_get_argument_type(Argument const* arg)
+char const *
+minissd_get_argument_type(Argument const *arg)
 {
 	return arg ? arg->type : NULL;
 }
 
 // Traversal functions
-AstNode const*
-minissd_get_next_node(AstNode const* node)
+AstNode const *
+minissd_get_next_node(AstNode const *node)
 {
 	return node ? node->next : NULL;
 }
 
-Property const*
-minissd_get_next_property(Property const* prop)
+Property const *
+minissd_get_next_property(Property const *prop)
 {
 	return prop ? prop->next : NULL;
 }
 
-EnumVariant const*
-minissd_get_next_enum_variant(EnumVariant const* value)
+EnumVariant const *
+minissd_get_next_enum_variant(EnumVariant const *value)
 {
 	return value ? value->next : NULL;
 }
 
-Attribute const*
-minissd_get_next_attribute(Attribute const* attr)
+Attribute const *
+minissd_get_next_attribute(Attribute const *attr)
 {
 	return attr ? attr->next : NULL;
 }
 
-AttributeParameter const*
-minissd_get_next_attribute_parameter(AttributeParameter const* arg)
+AttributeParameter const *
+minissd_get_next_attribute_parameter(AttributeParameter const *arg)
 {
 	return arg ? arg->next : NULL;
 }
 
-char const*
-minissd_get_attribute_parameter_name(AttributeParameter const* arg)
+char const *
+minissd_get_attribute_parameter_name(AttributeParameter const *arg)
 {
 	return arg ? arg->key : NULL;
 }
 
-char const*
-minissd_get_attribute_parameter_value(AttributeParameter const* arg)
+char const *
+minissd_get_attribute_parameter_value(AttributeParameter const *arg)
 {
 	return arg ? arg->opt_value : NULL;
 }
 
-Dependency const*
-minissd_get_next_dependency(Dependency const* dep)
+Dependency const *
+minissd_get_next_dependency(Dependency const *dep)
 {
 	return dep ? dep->next : NULL;
 }
 
-Handler const*
-minissd_get_next_handler(Handler const* handler)
+Handler const *
+minissd_get_next_handler(Handler const *handler)
 {
 	return handler ? handler->next : NULL;
 }
 
-Event const*
-minissd_get_next_event(Event const* event)
+Event const *
+minissd_get_next_event(Event const *event)
 {
 	return event ? event->next : NULL;
 }
 
-Argument const*
-minissd_get_next_argument(Argument const* arg)
+Argument const *
+minissd_get_next_argument(Argument const *arg)
 {
 	return arg ? arg->next : NULL;
 }
 
-char const*
-minissd_get_dependency_path(Dependency const* dep)
+char const *
+minissd_get_dependency_path(Dependency const *dep)
 {
 	return dep ? dep->path : NULL;
 }
 
-char const*
-minissd_get_service_name(AstNode const* node)
+char const *
+minissd_get_service_name(AstNode const *node)
 {
 	return (node && node->type == NODE_SERVICE) ? node->node.service_node.name : NULL;
 }
