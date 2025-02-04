@@ -26,8 +26,8 @@ data MyData {
 	# [ column ( name = "field2" , type="int" )]
 	field2: int,
 
-	some_array: list of byte;
-	another_array: 5 of byte;
+	some_array: list of byte,
+	another_array: 5 of byte,
 };
 
 #[a(b="c")]
