@@ -45,13 +45,18 @@ extern "C"
         struct Attribute *next;
     } Attribute;
 
+    typedef struct Type
+    {
+        char *name;
+        bool is_list;
+        int *count; // Nullable
+    } Type;
+
     typedef struct Property
     {
         Attribute *attributes;
         char *name;
-        char *type;
-        bool is_list;
-        int *count; // Nullable
+        Type *type;
         struct Property *next;
     } Property;
 
@@ -67,7 +72,7 @@ extern "C"
     {
         Attribute *attributes;
         char *name;
-        char *type;
+        Type *type;
         struct Argument *next;
     } Argument;
 
@@ -76,7 +81,7 @@ extern "C"
         Attribute *opt_ll_attributes;
         char *name;
         Argument *opt_ll_arguments;
-        char *opt_return_type;
+        Type *opt_return_type;
         struct Handler *next;
     } Handler;
 
@@ -199,10 +204,13 @@ extern "C"
     minissd_get_next_node(AstNode const *node);
 
     // Handler Accessors
+    MINISSD_API Attribute const *
+    minissd_get_handler_attributes(Handler const *node);
+
     MINISSD_API char const *
     minissd_get_handler_name(Handler const *node);
 
-    MINISSD_API char const *
+    MINISSD_API Type const *
     minissd_get_handler_return_type(Handler const *handler);
 
     MINISSD_API Argument const *
@@ -232,20 +240,24 @@ extern "C"
     MINISSD_API char const *
     minissd_get_property_name(Property const *prop);
 
-    MINISSD_API char const *
+    MINISSD_API Type const *
     minissd_get_property_type(Property const *prop);
-
-    MINISSD_API bool
-    minissd_get_property_is_list(Property const *prop);
-
-    MINISSD_API int const *
-    minissd_get_property_count(Property const *prop);
 
     MINISSD_API Attribute const *
     minissd_get_property_attributes(Property const *prop);
 
     MINISSD_API Property const *
     minissd_get_next_property(Property const *prop);
+
+    // Type Accessors
+    MINISSD_API char const *
+    minissd_get_type_name(Type const *type);
+
+    MINISSD_API bool
+    minissd_get_type_is_list(Type const *type);
+
+    MINISSD_API int const *
+    minissd_get_type_count(Type const *type);
 
     // Enum Variant Accessors
     MINISSD_API char const *
@@ -261,13 +273,13 @@ extern "C"
 
     // Argument Accessors
     MINISSD_API char const *
-    minissd_get_argument_name(Argument const *prop);
+    minissd_get_argument_name(Argument const *arg);
 
-    MINISSD_API char const *
-    minissd_get_argument_type(Argument const *prop);
+    MINISSD_API Type const *
+    minissd_get_argument_type(Argument const *arg);
 
     MINISSD_API Attribute const *
-    minissd_get_argument_attributes(Argument const *prop);
+    minissd_get_argument_attributes(Argument const *arg);
 
     MINISSD_API Argument const *
     minissd_get_next_argument(Argument const *arg);

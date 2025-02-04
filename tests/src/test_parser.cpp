@@ -31,7 +31,10 @@ TEST_F(ParserTest, ValidInput_Data)
     Property const *prop = minissd_get_properties(ast);
     ASSERT_NE(prop, nullptr);
     ASSERT_STREQ(minissd_get_property_name(prop), "name");
-    ASSERT_STREQ(minissd_get_property_type(prop), "string");
+
+    Type const *type = minissd_get_property_type(prop);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "string");
 
     prop = minissd_get_next_property(prop);
     ASSERT_EQ(prop, nullptr);
@@ -53,7 +56,10 @@ TEST_F(ParserTest, ValidInput_DataNoTrailingComma)
     Property const *prop = minissd_get_properties(ast);
     ASSERT_NE(prop, nullptr);
     ASSERT_STREQ(minissd_get_property_name(prop), "name");
-    ASSERT_STREQ(minissd_get_property_type(prop), "string");
+
+    Type const *type = minissd_get_property_type(prop);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "string");
 
     prop = minissd_get_next_property(prop);
     ASSERT_EQ(prop, nullptr);
@@ -75,7 +81,10 @@ TEST_F(ParserTest, ValidInput_DataWithSpaceAfter)
     Property const *prop = minissd_get_properties(ast);
     ASSERT_NE(prop, nullptr);
     ASSERT_STREQ(minissd_get_property_name(prop), "name");
-    ASSERT_STREQ(minissd_get_property_type(prop), "string");
+
+    Type const *type = minissd_get_property_type(prop);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "string");
 
     prop = minissd_get_next_property(prop);
     ASSERT_EQ(prop, nullptr);
@@ -97,12 +106,16 @@ TEST_F(ParserTest, ValidInput_DataMultipleProperties)
     Property const *prop = minissd_get_properties(ast);
     ASSERT_NE(prop, nullptr);
     ASSERT_STREQ(minissd_get_property_name(prop), "name");
-    ASSERT_STREQ(minissd_get_property_type(prop), "string");
+    Type const *type = minissd_get_property_type(prop);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "string");
 
     prop = minissd_get_next_property(prop);
     ASSERT_NE(prop, nullptr);
     ASSERT_STREQ(minissd_get_property_name(prop), "age");
-    ASSERT_STREQ(minissd_get_property_type(prop), "int");
+    type = minissd_get_property_type(prop);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "int");
 }
 
 TEST_F(ParserTest, ValidInput_DataMultiplePropertiesWithoutTrailingComma)
@@ -121,12 +134,16 @@ TEST_F(ParserTest, ValidInput_DataMultiplePropertiesWithoutTrailingComma)
     Property const *prop = minissd_get_properties(ast);
     ASSERT_NE(prop, nullptr);
     ASSERT_STREQ(minissd_get_property_name(prop), "name");
-    ASSERT_STREQ(minissd_get_property_type(prop), "string");
+    Type const *type = minissd_get_property_type(prop);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "string");
 
     prop = minissd_get_next_property(prop);
     ASSERT_NE(prop, nullptr);
     ASSERT_STREQ(minissd_get_property_name(prop), "age");
-    ASSERT_STREQ(minissd_get_property_type(prop), "int");
+    type = minissd_get_property_type(prop);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "int");
 }
 
 TEST_F(ParserTest, ValidInput_DataWithAttribute)
@@ -146,7 +163,9 @@ TEST_F(ParserTest, ValidInput_DataWithAttribute)
     Property const *prop = minissd_get_properties(ast);
     ASSERT_NE(prop, nullptr);
     ASSERT_STREQ(minissd_get_property_name(prop), "name");
-    ASSERT_STREQ(minissd_get_property_type(prop), "string");
+    Type const *type = minissd_get_property_type(prop);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "string");
 
     Attribute const *attr = minissd_get_property_attributes(prop);
     ASSERT_NE(attr, nullptr);
@@ -231,11 +250,15 @@ TEST_F(ParserTest, ValidInput_ServiceOneHandlerAndArguments)
     Argument const *args = minissd_get_handler_arguments(handlers);
     ASSERT_NE(args, nullptr);
     ASSERT_STREQ(minissd_get_argument_name(args), "a");
-    ASSERT_STREQ(minissd_get_argument_type(args), "int");
+    Type const *type = minissd_get_argument_type(args);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "int");
     args = minissd_get_next_argument(args);
     ASSERT_NE(args, nullptr);
     ASSERT_STREQ(minissd_get_argument_name(args), "b");
-    ASSERT_STREQ(minissd_get_argument_type(args), "string");
+    type = minissd_get_argument_type(args);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "string");
     args = minissd_get_next_argument(args);
     ASSERT_EQ(args, nullptr);
 
@@ -262,15 +285,21 @@ TEST_F(ParserTest, ValidInput_ServiceOneHandlerArgumentsAndReturnValue)
     Argument const *args = minissd_get_handler_arguments(handlers);
     ASSERT_NE(args, nullptr);
     ASSERT_STREQ(minissd_get_argument_name(args), "a");
-    ASSERT_STREQ(minissd_get_argument_type(args), "int");
+    Type const *type = minissd_get_argument_type(args);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "int");
     args = minissd_get_next_argument(args);
     ASSERT_NE(args, nullptr);
     ASSERT_STREQ(minissd_get_argument_name(args), "b");
-    ASSERT_STREQ(minissd_get_argument_type(args), "string");
+    type = minissd_get_argument_type(args);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "string");
     args = minissd_get_next_argument(args);
     ASSERT_EQ(args, nullptr);
 
-    ASSERT_STREQ(minissd_get_handler_return_type(handlers), "int");
+    type = minissd_get_handler_return_type(handlers);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "int");
 
     handlers = minissd_get_next_handler(handlers);
     ASSERT_EQ(handlers, nullptr);
@@ -295,11 +324,15 @@ TEST_F(ParserTest, ValidInput_ServiceOneEventWithArguments)
     Argument const *args = minissd_get_event_arguments(events);
     ASSERT_NE(args, nullptr);
     ASSERT_STREQ(minissd_get_argument_name(args), "a");
-    ASSERT_STREQ(minissd_get_argument_type(args), "int");
+    Type const *type = minissd_get_argument_type(args);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "string");
     args = minissd_get_next_argument(args);
     ASSERT_NE(args, nullptr);
     ASSERT_STREQ(minissd_get_argument_name(args), "b");
-    ASSERT_STREQ(minissd_get_argument_type(args), "string");
+    type = minissd_get_argument_type(args);
+    ASSERT_NE(type, nullptr);
+    ASSERT_STREQ(minissd_get_type_name(type), "string");
     args = minissd_get_next_argument(args);
     ASSERT_EQ(args, nullptr);
 

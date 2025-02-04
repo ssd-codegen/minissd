@@ -87,21 +87,22 @@ int main(int argc, char **argv)
 
             for (Property const *prop = minissd_get_properties(node); prop; prop = minissd_get_next_property(prop))
             {
-                if (minissd_get_property_is_list(prop))
+                Type const *type = minissd_get_property_type(prop);
+                if (minissd_get_type_is_list(type))
                 {
-                    int const *count = minissd_get_property_count(prop);
+                    int const *count = minissd_get_type_count(type);
                     if (count)
                     {
-                        printf("  Property: %s : %d of %s\n", minissd_get_property_name(prop), *count, minissd_get_property_type(prop));
+                        printf("  Property: %s : %d of %s\n", minissd_get_property_name(prop), *count, minissd_get_type_name(type));
                     }
                     else
                     {
-                        printf("  Property: %s : List of %s\n", minissd_get_property_name(prop), minissd_get_property_type(prop));
+                        printf("  Property: %s : List of %s\n", minissd_get_property_name(prop), minissd_get_type_name(type));
                     }
                 }
                 else
                 {
-                    printf("  Property: %s : %s\n", minissd_get_property_name(prop), minissd_get_property_type(prop));
+                    printf("  Property: %s : %s\n", minissd_get_property_name(prop), minissd_get_type_name(type));
                 }
                 print_attributes(prop->attributes);
             }
@@ -140,13 +141,45 @@ int main(int argc, char **argv)
             for (Handler const *handler = minissd_get_handlers(node); handler; handler = minissd_get_next_handler(handler))
             {
                 printf("  Handler: %s\n", handler->name);
-                if (handler->opt_return_type)
+                Type const *return_type = minissd_get_handler_return_type(handler);
+                if (return_type)
                 {
-                    printf("    Return Type: %s\n", handler->opt_return_type);
+                    if (minissd_get_type_is_list(return_type))
+                    {
+                        int const *count = minissd_get_type_count(return_type);
+                        if (count)
+                        {
+                            printf("  Return Type: %d of %s\n", *count, minissd_get_type_name(return_type));
+                        }
+                        else
+                        {
+                            printf("  Return Type: List of %s\n", minissd_get_type_name(return_type));
+                        }
+                    }
+                    else
+                    {
+                        printf("  Return Type: %s\n", minissd_get_type_name(return_type));
+                    }
                 }
                 for (Argument const *arg = minissd_get_handler_arguments(handler); arg; arg = minissd_get_next_argument(arg))
                 {
-                    printf("    Argument: %s : %s\n", minissd_get_argument_name(arg), minissd_get_argument_type(arg));
+                    Type const *arg_type = minissd_get_argument_type(arg);
+                    if (minissd_get_type_is_list(arg_type))
+                    {
+                        int const *count = minissd_get_type_count(arg_type);
+                        if (count)
+                        {
+                            printf("  Argument: %s : %d of %s\n", minissd_get_argument_name(arg), *count, minissd_get_type_name(arg_type));
+                        }
+                        else
+                        {
+                            printf("  Argument: %s : List of %s\n", minissd_get_argument_name(arg), minissd_get_type_name(arg_type));
+                        }
+                    }
+                    else
+                    {
+                        printf("  Argument: %s : %s\n", minissd_get_argument_name(arg), minissd_get_type_name(arg_type));
+                    }
                     print_attributes(minissd_get_argument_attributes(arg));
                 }
                 print_attributes(handler->opt_ll_attributes);
@@ -157,7 +190,23 @@ int main(int argc, char **argv)
                 printf("  Event: %s\n", event->name);
                 for (Argument const *arg = minissd_get_event_arguments(event); arg; arg = minissd_get_next_argument(arg))
                 {
-                    printf("    Argument: %s : %s\n", minissd_get_argument_name(arg), minissd_get_argument_type(arg));
+                    Type const *arg_type = minissd_get_argument_type(arg);
+                    if (minissd_get_type_is_list(arg_type))
+                    {
+                        int const *count = minissd_get_type_count(arg_type);
+                        if (count)
+                        {
+                            printf("  Argument: %s : %d of %s\n", minissd_get_argument_name(arg), *count, minissd_get_type_name(arg_type));
+                        }
+                        else
+                        {
+                            printf("  Argument: %s : List of %s\n", minissd_get_argument_name(arg), minissd_get_type_name(arg_type));
+                        }
+                    }
+                    else
+                    {
+                        printf("  Argument: %s : %s\n", minissd_get_argument_name(arg), minissd_get_type_name(arg_type));
+                    }
                     print_attributes(minissd_get_argument_attributes(arg));
                 }
                 print_attributes(event->opt_ll_attributes);

@@ -79,6 +79,19 @@ free_attributes(Attribute *attrs)
 }
 
 static void
+free_type(Type *type)
+{
+	if (type->name)
+	{
+		free(type->name);
+	}
+	if (type->count)
+	{
+		free(type->count);
+	}
+}
+
+static void
 free_arguments(Argument *args)
 {
 	Argument *current = args;
@@ -90,7 +103,7 @@ free_arguments(Argument *args)
 		}
 		if (current->type)
 		{
-			free(current->type);
+			free_type(current->type);
 		}
 		free_attributes(current->attributes);
 		Argument *next = current->next;
@@ -111,11 +124,7 @@ free_properties(Property *prop)
 		}
 		if (current->type)
 		{
-			free(current->type);
-		}
-		if (current->count)
-		{
-			free(current->count);
+			free_type(current->type);
 		}
 		free_attributes(current->attributes);
 		Property *outer_next = current->next;
@@ -753,6 +762,87 @@ parse_enum_variants(Parser *p)
 	return head;
 }
 
+static Type *
+parse_type(Parser *p)
+{
+	Type *type = (Type *)calloc(1, sizeof(Type));
+
+	size_t old_index = p->index;
+	size_t old_current = p->current;
+	int old_line = p->line;
+	int old_column = p->line;
+
+	char *list_ident = parse_identifier(p, CTX("property type 1"));
+	if (strcmp(list_ident, "list") == 0)
+	{
+		eat_whitespaces_and_comments(p);
+		type->is_list = true;
+		char *of_ident = parse_identifier(p, CTX("property type 2"));
+		if (!of_ident || strcmp(of_ident, "of") != 0)
+		{
+			error(p, "Expected 'of' after 'list'");
+			if (of_ident)
+			{
+				free(of_ident);
+			}
+			free_type(type);
+			free(list_ident);
+			return NULL;
+		}
+		eat_whitespaces_and_comments(p);
+		free(of_ident);
+	}
+	else
+	{
+		p->index = old_index;
+		p->current = old_current;
+		p->line = old_line;
+		p->column = old_column;
+	}
+	free(list_ident);
+
+	if (!type->is_list)
+	{
+		int *number = parse_int(p, CTX("property type 1"));
+		if (number)
+		{
+			eat_whitespaces_and_comments(p);
+			type->is_list = true;
+			type->count = number;
+			char *of_ident = parse_identifier(p, CTX("property type 2"));
+			if (!of_ident || strcmp(of_ident, "of") != 0)
+			{
+				error(p, "Expected 'of' after 'list'");
+				if (of_ident)
+				{
+					free(of_ident);
+				}
+				free_type(type);
+				return NULL;
+			}
+			eat_whitespaces_and_comments(p);
+			free(of_ident);
+		}
+		else
+		{
+			p->index = old_index;
+			p->current = old_current;
+			p->line = old_line;
+			p->column = old_column;
+		}
+	}
+
+	type->name = parse_path(p, CTX("property type"));
+
+	if (!type->name)
+	{
+		free_type(type);
+		return NULL;
+	};
+
+	return type;
+}
+
 static Property *
 parse_properties(Parser *p)
 {
@@ -804,82 +894,15 @@ parse_properties(Parser *p)
 
 		eat_whitespaces_and_comments(p);
 
-		size_t old_index = p->index;
-		size_t old_current = p->current;
-		int old_line = p->line;
-		int old_column = p->line;
+		DBG("Property type: %s\n", prop->type);
 
-		char *list_ident = parse_identifier(p, CTX("property type 1"));
-		if (strcmp(list_ident, "list") == 0)
-		{
-			eat_whitespaces_and_comments(p);
-			prop->is_list = true;
-			char *of_ident = parse_identifier(p, CTX("property type 2"));
-			if (!of_ident || strcmp(of_ident, "of") != 0)
-			{
-				error(p, "Expected 'of' after 'list'");
-				if (of_ident)
-				{
-					free(of_ident);
-				}
-				free(list_ident);
-				free_properties(prop);
-				free_properties(head);
-				return NULL;
-			}
-			eat_whitespaces_and_comments(p);
-			free(of_ident);
-		}
-		else
-		{
-			p->index = old_index;
-			p->current = old_current;
-			p->line = old_line;
-			p->column = old_column;
-		}
-		free(list_ident);
-
-		if (!prop->is_list)
-		{
-			int *number = parse_int(p, CTX("property type 1"));
-			if (number)
-			{
-				eat_whitespaces_and_comments(p);
-				prop->is_list = true;
-				prop->count = number;
-				char *of_ident = parse_identifier(p, CTX("property type 2"));
-				if (!of_ident || strcmp(of_ident, "of") != 0)
-				{
-					error(p, "Expected 'of' after 'list'");
-					if (of_ident)
-					{
-						free(of_ident);
-					}
-					free_properties(prop);
-					free_properties(head);
-					return NULL;
-				}
-				eat_whitespaces_and_comments(p);
-				free(of_ident);
-			}
-			else
-			{
-				p->index = old_index;
-				p->current = old_current;
-				p->line = old_line;
-				p->column = old_column;
-			}
-		}
-
-		prop
-			->type = parse_path(p, CTX("property type"));
+		prop->type = parse_type(p);
 		if (!prop->type)
 		{
 			free_properties(prop);
 			free_properties(head);
 			return NULL;
-		};
-		DBG("Property type: %s\n", prop->type);
+		}
 
 		if (!head)
 		{
@@ -957,7 +980,7 @@ parse_handler_arguments(Parser *p)
 		advance(p);
 		DBG("Parsing argument type\n");
 		eat_whitespaces_and_comments(p);
-		arg->type = parse_identifier(p, CTX("handler argument type"));
+		arg->type = parse_type(p);
 		eat_whitespaces_and_comments(p);
 		if (!arg->type)
 		{
@@ -1164,7 +1187,7 @@ parse_service(Parser *p)
 				advance(p);
 				DBG("Parsing handler return type\n");
 				eat_whitespaces_and_comments(p);
-				handler->opt_return_type = parse_identifier(p, CTX("handler return type"));
+				handler->opt_return_type = parse_type(p);
 				eat_whitespaces_and_comments(p);
 				if (!handler->opt_return_type)
 				{
@@ -1548,13 +1571,19 @@ minissd_get_enum_name(AstNode const *node)
 	return (node && node->type == NODE_ENUM) ? node->node.enum_node.name : NULL;
 }
 
+Attribute const *
+minissd_get_handler_attributes(Handler const *node)
+{
+	return (node) ? node->opt_ll_attributes : NULL;
+}
+
 char const *
 minissd_get_handler_name(Handler const *handler)
 {
 	return (handler) ? handler->name : NULL;
 }
 
-char const *
+Type const *
 minissd_get_handler_return_type(Handler const *handler)
 {
 	return (handler) ? handler->opt_return_type : NULL;
@@ -1598,15 +1627,21 @@ minissd_get_property_name(Property const *prop)
 	return prop ? prop->name : NULL;
 }
 
-bool minissd_get_property_is_list(Property const *prop)
+char const *
+minissd_get_type_name(Type const *type)
 {
-	return prop ? prop->is_list : false;
+	return type ? type->name : NULL;
+}
+
+bool minissd_get_type_is_list(Type const *type)
+{
+	return type ? type->is_list : false;
 }
 
 int const *
-minissd_get_property_count(Property const *prop)
+minissd_get_type_count(Type const *type)
 {
-	return prop ? prop->count : NULL;
+	return type ? type->count : NULL;
 }
 
 Attribute const *
@@ -1615,7 +1650,7 @@ minissd_get_property_attributes(Property const *prop)
 	return prop ? prop->attributes : NULL;
 }
 
-char const *
+Type const *
 minissd_get_property_type(Property const *prop)
 {
 	return prop ? prop->type : NULL;
@@ -1697,7 +1732,7 @@ minissd_get_argument_attributes(Argument const *arg)
 {
 	return arg ? arg->attributes : NULL;
 }
-char const *
+Type const *
 minissd_get_argument_type(Argument const *arg)
 {
 	return arg ? arg->type : NULL;
