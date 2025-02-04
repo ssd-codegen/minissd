@@ -902,7 +902,6 @@ parse_properties(Parser* p)
 	}
 
 	eat_whitespaces_and_comments(p);
-	debug(p);
 	if (p->current != '}')
 	{
 		error(p, "Expected ',' after property");
