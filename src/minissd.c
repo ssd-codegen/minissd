@@ -255,16 +255,6 @@ error(Parser *p, const char *message)
     snprintf(p->error, MAX_ERROR_SIZE, "Error: %s at line %d, column %d", message, p->line, p->column);
 }
 
-static void
-set_index(Parser *p, size_t index)
-{
-    if (index < p->input_length)
-    {
-        p->index = index;
-        p->current = p->input[index];
-    }
-}
-
 static char
 peek(const Parser *p)
 {
@@ -814,49 +804,68 @@ parse_properties(Parser *p)
 
         eat_whitespaces_and_comments(p);
 
-        size_t pos = p->index;
+        size_t old_index = p->index;
+        size_t old_current = p->current;
+        int old_line = p->line;
+        int old_column = p->line;
 
         char *list_ident = parse_identifier(p, CTX("property type 1"));
         if (strcmp(list_ident, "list") == 0)
         {
+            eat_whitespaces_and_comments(p);
             prop->is_list = true;
             char *of_ident = parse_identifier(p, CTX("property type 2"));
-            if (strcmp(of_ident, "of") != 0)
+            if (!of_ident || strcmp(of_ident, "of") != 0)
             {
                 error(p, "Expected 'of' after 'list'");
-                free(of_ident);
+                if (of_ident)
+                {
+                    free(of_ident);
+                }
                 free(list_ident);
                 free_properties(prop);
                 free_properties(head);
                 return NULL;
             }
+            eat_whitespaces_and_comments(p);
             free(of_ident);
         }
         else
         {
-            set_index(p, pos);
+            p->index = old_index;
+            p->current = old_current;
+            p->line = old_line;
+            p->column = old_column;
         }
         free(list_ident);
 
         int *number = parse_int(p, CTX("property type 1"));
         if (number)
         {
+            eat_whitespaces_and_comments(p);
             prop->is_list = true;
             prop->count = number;
             char *of_ident = parse_identifier(p, CTX("property type 2"));
-            if (strcmp(of_ident, "of") != 0)
+            if (!of_ident || strcmp(of_ident, "of") != 0)
             {
                 error(p, "Expected 'of' after 'list'");
-                free(of_ident);
+                if (of_ident)
+                {
+                    free(of_ident);
+                }
                 free_properties(prop);
                 free_properties(head);
                 return NULL;
             }
+            eat_whitespaces_and_comments(p);
             free(of_ident);
         }
         else
         {
-            set_index(p, pos);
+            p->index = old_index;
+            p->current = old_current;
+            p->line = old_line;
+            p->column = old_column;
         }
 
         prop
@@ -890,6 +899,7 @@ parse_properties(Parser *p)
     }
 
     eat_whitespaces_and_comments(p);
+    debug(p);
     if (p->current != '}')
     {
         error(p, "Expected ',' after property");
