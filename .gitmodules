@@ -1,3 +1,6 @@
 [submodule "external/gtest"]
 	path = external/gtest
 	url = https://github.com/google/googletest.git
+[submodule "extern/walloc"]
+	path = extern/walloc
+	url = https://github.com/wingo/walloc

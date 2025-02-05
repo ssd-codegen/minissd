@@ -326,7 +326,7 @@ TEST_F(ParserTest, ValidInput_ServiceOneEventWithArguments)
     ASSERT_STREQ(minissd_get_argument_name(args), "a");
     Type const *type = minissd_get_argument_type(args);
     ASSERT_NE(type, nullptr);
-    ASSERT_STREQ(minissd_get_type_name(type), "string");
+    ASSERT_STREQ(minissd_get_type_name(type), "int");
     args = minissd_get_next_argument(args);
     ASSERT_NE(args, nullptr);
     ASSERT_STREQ(minissd_get_argument_name(args), "b");

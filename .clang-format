@@ -1,0 +1,38 @@
+# .clang-format
+
+Language: Cpp
+BasedOnStyle: LLVM
+
+# Place opening braces on new lines (Allman style)
+BreakBeforeBraces: Allman
+
+# Place return types on their own line
+AlwaysBreakAfterReturnType: All
+AlwaysBreakAfterDefinitionReturnType: All
+
+# Align function parameters and arguments
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+
+# Control indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Keep function definitions and declarations tidy
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false
+BinPackArguments: false
+
+# Handle pointer alignment
+PointerAlignment: Left
+
+# Keep includes organized
+SortIncludes: true
+IncludeBlocks: Preserve
+
+# Miscellaneous preferences
+SpacesBeforeTrailingComments: 2
+SpaceBeforeParens: ControlStatements
+Cpp11BracedListStyle: false
