@@ -27,7 +27,7 @@ endif()
 
 if(MINISSD_BUILD_TESTS)
     set(gtest_force_shared_crt ON)
-    add_subdirectory(external/gtest)
+    add_subdirectory(extern/gtest)
 
     add_subdirectory(tests)
 endif()
